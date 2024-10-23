@@ -18,4 +18,4 @@
 
 ## Storage
 - saves episode data to a sqlite database
-- 
+- table schemas
