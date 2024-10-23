@@ -4,14 +4,17 @@ import os
 
 
 class GroqBackend(Backend):
-    def __init__(self):
+    def __init__(
+            self,
+            model_id: str = "llama3-8b-8192"
+    ):
         super().__init__("groq")
         self.client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-        self.model = "llama3-8b-8192"
+        self.model = model_id
 
-    def generate(self, message):
+    def generate(self, messages):
         chat_completion = self.client.chat.completions.create(
-            messages=[{"role": "user", "content": message}],
+            messages=messages,
             model=self.model,
         )
         return chat_completion.choices[0].message.content
