@@ -31,6 +31,7 @@ class GridworldEnvironment:
         for agent_id, pos in self.agent_positions.items():
             self.grid[pos] = agent_id + 1
         return self.agent_positions
+
     def step(self, agent_id: int, action: str) -> str:
         """
         Executes a step for the specified agent based on the given action.

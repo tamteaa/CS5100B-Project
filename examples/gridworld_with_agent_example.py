@@ -1,3 +1,5 @@
+import time
+
 from src.environments.custom_environments.gridworld_environment import GridworldEnvironment
 from src.agent.base_agent import Agent
 from src.agent.prompts import PromptLoader
@@ -82,6 +84,7 @@ if __name__ == '__main__':
     agent_reached_target = False
 
     for episode in range(max_episodes):
+        time.sleep(1)
         print("=" * 20 + f" Episode {episode + 1} of {max_episodes} " + "=" * 20 + "\n")
 
         for agent_id, agent in agents.items():

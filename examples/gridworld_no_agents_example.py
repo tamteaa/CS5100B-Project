@@ -10,9 +10,11 @@ if __name__ == '__main__':
     # Render initial state
     env.render()
 
-    # Move agent 0 down and agent 1 up
-    env.move(0, 'down')
-    env.move(1, 'up')
+    observation = env.step(0, 'north')
+    print(observation)
+
+    observation = env.step(1, 'south')
+    print(observation)
 
     # Render updated state
     env.render()

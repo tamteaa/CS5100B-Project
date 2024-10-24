@@ -7,8 +7,11 @@ from dotenv import load_dotenv
 load_dotenv("../.env")
 
 if __name__ == '__main__':
-
-    agent = Agent(agent_id=0, action_space=[])
+    agent = Agent(
+        agent_id=0,
+        name="ChatGPT",
+        action_space=[]
+    )
 
     agent.step("Hey, how are you doing?")
 
