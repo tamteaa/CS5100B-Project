@@ -2,7 +2,7 @@ from src.agent.prompts import PromptLoader
 
 
 if __name__ == '__main__':
-    # Step 1: Initialize the PromptLoader with a Path object for the prompt repository directory
+    # Step 1: Initialize the PromptLoader
     prompt_loader = PromptLoader()
 
     # Step 2: List all available prompts
