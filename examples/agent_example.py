@@ -1,5 +1,3 @@
-
-
 from src.agent.base_agent import Agent
 from dotenv import load_dotenv
 
@@ -9,7 +7,7 @@ load_dotenv("../.env")
 if __name__ == '__main__':
     agent = Agent(
         agent_id=0,
-        name="ChatGPT",
+        name="Llama-model",
         action_space=[]
     )
 
