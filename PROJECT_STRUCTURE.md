@@ -10,7 +10,7 @@
   - observation prompt (how do we format the observation that the agent gets from the environment?)
 -
 
-## Action
+## Action (Sudhanva)
 
 - defines an action as a python dataclass
 - options to format to a string from the class
