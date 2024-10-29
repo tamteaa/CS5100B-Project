@@ -4,3 +4,5 @@
 .idea
 
 *.db
+
+**/__pycache__/
