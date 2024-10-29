@@ -29,6 +29,16 @@ class Simulator:
 
 
     def define_target_for_environment(self, env_name, target):
+        """
+        Defines a target for an environment. The agent(s) work to achieve this target. This will vary from environment
+        to environment.
+
+        :param env_name : name of the environment. Must be one specified in :class:`EnvironmentNames`.
+
+        :param target   : Target for the environment. Agents work to get this target.
+
+        :return         : None
+        """
         self.environments[env_name].define_target(target)
 
 

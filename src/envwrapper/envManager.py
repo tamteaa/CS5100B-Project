@@ -53,9 +53,23 @@ class EnvManager:
             self.agents.append(agent)
 
     def define_target(self, target):
+        """
+        Sets the specified target for this environment.
+
+        :param target   :   Target for this environment.
+
+        :return         :   None
+        """
         self.target = target
 
     def run(self, num_episodes):
+        """
+        Runs the specified number of episodes.
+
+        :param num_episodes :   Number of episodes to run.
+
+        :return             :   None
+        """
         print("*" * 20 + f" Starting simulation of environment {self.env_name} " + "*" * 20)
         observation = self.env.reset()
         observation_str = f"Your current position is: {observation[0]}"
