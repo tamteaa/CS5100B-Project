@@ -63,6 +63,16 @@ class EnvManager:
         """
         self.target = target
 
+    def is_target_achieved(self, agent):
+        """
+        Given an agent, this method checks if the target is achieved for that agent.
+
+        :param agent    :   Agent object to be checked.
+
+        :return         :   boolean true of false.
+        """
+        return self.env.get_agent_position(agent.id) == self.target
+
     def set_output_instruction_text(self, output_instruction_text):
         """
         Sets the output instruction text for this environment.
@@ -110,7 +120,7 @@ class EnvManager:
                 print(f"Agent {agent.id} Current Position: {agents_position}")
 
                 # Check if the agent has reached the target position
-                if agents_position == self.target:
+                if self.is_target_achieved(agent):
                     agent_reached_target = True
                     print(f"Agent {agent.id} has reached the target position {self.target}!")
                     break
@@ -124,5 +134,6 @@ class EnvManager:
         if agent_reached_target:
             print("Simulation Complete: The agent successfully reached the target position!")
         else:
-            print("Simulation Complete: The agent did not reach the target position within the maximum number of episodes.")
+            print("Simulation Complete: The agent did not reach the target position within the maximum number of "
+                  "episodes.")
 
