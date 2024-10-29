@@ -3,6 +3,8 @@ This class provides manages an environment.
 It defines a specific environment, number of agents in that environment,
 and the actions to take.
 """
+import time
+
 from dotenv import load_dotenv
 from src.agent.base_agent import Agent
 from src.agent.prompts import PromptLoader
@@ -34,10 +36,12 @@ class EnvManager:
                           default settings for environment.
          """
         self.agents = []
+        self.target = None
         env_name = env_name.lower()
         if env_name not in (env.value for env in EnvironmentNames):
             raise ValueError("Invalid environment name")
 
+        self.env_name = env_name
         self.env = self.__env_map[env_name](**kwargs)
         for i in range(agents):
             agent_id = int(i)
@@ -48,5 +52,52 @@ class EnvManager:
             agent = Agent(agent_id, name, action_space, str(system_prompt))
             self.agents.append(agent)
 
+    def define_target(self, target):
+        self.target = target
+
     def run(self, num_episodes):
-        pass
+        print("*" * 20 + f" Starting simulation of environment {self.env_name} " + "*" * 20)
+        observation = self.env.reset()
+        observation_str = f"Your current position is: {observation[0]}"
+        agent_reached_target = False
+        for episode in range(num_episodes):
+            time.sleep(1)
+            print("*" * 20 + f" Episode {episode + 1} of {num_episodes} " + "*" * 20)
+
+            for agent in self.agents:
+                print(f"Agent {agent.id}: {agent.name}, Observation {observation_str}")
+                action = agent.step(observation_str)
+
+                # Extract the action name from the agent's response
+                action_name = action.get("action_name", "invalid")
+                print(f"Agent {agent.id} Action: {action_name}")
+                print(f"Rationale: {action.get('rationale', 'No rationale provided.')}")
+
+                # Execute the action in the environment
+                observation_str = self.env.step(agent.id, action_name)
+
+                # Display the updated grid state
+                print("Updated Grid State:")
+                self.env.render()
+
+                # Get the agent's current position
+                agents_position = self.env.get_agent_position(agent.id)
+                print(f"Agent {agent.id} Current Position: {agents_position}")
+
+                # Check if the agent has reached the target position
+                if agents_position == self.target:
+                    agent_reached_target = True
+                    print(f"Agent {agent.id} has reached the target position {self.target}!")
+                    break
+
+            print("*" * 50)
+
+            if agent_reached_target:
+                break
+
+        # Final summary
+        if agent_reached_target:
+            print("Simulation Complete: The agent successfully reached the target position!")
+        else:
+            print("Simulation Complete: The agent did not reach the target position within the maximum number of episodes.")
+

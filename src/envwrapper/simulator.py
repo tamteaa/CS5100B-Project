@@ -28,6 +28,10 @@ class Simulator:
         print(f"{env_name} environment created.")
 
 
+    def define_target_for_environment(self, env_name, target):
+        self.environments[env_name].define_target(target)
+
+
     def remove_environment(self, env_name):
         """
         Removes a specified environment from the simulator.
@@ -69,3 +73,5 @@ class Simulator:
 if __name__ == "__main__":
     simulator = Simulator()
     simulator.add_environment(EnvironmentNames.GRID_WORLD.value)
+    simulator.define_target_for_environment(EnvironmentNames.GRID_WORLD.value, (4, 4))
+    simulator.run_environment(EnvironmentNames.GRID_WORLD.value)
