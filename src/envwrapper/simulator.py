@@ -1,10 +1,15 @@
 from envManager import EnvManager
+from src.agent.prompts import PromptLoader
 from src.envwrapper.env_names import EnvironmentNames
 
 class Simulator:
     """
     This is the main simulator class. It provides a common interface to manage and run environments.
     """
+
+    __prompt_map = {
+        EnvironmentNames.GRID_WORLD.value: PromptLoader().load_prompt("gridworld_system_prompt")
+    }
 
     def __init__(self):
         """
@@ -40,6 +45,61 @@ class Simulator:
         :return         : None
         """
         self.environments[env_name].define_target(target)
+
+
+    def get_agents_for_environment(self, env_name):
+        """
+        Returns the agents created for an environment.
+
+        :param env_name : Name of the environment.
+
+        :return         : A List of dicts containing agent id and agent name. { {id: 0, name: Agent_0} }.
+        """
+        agents = []
+        for agent in self.environments[env_name].agents:
+            agent_info = {"id": agent.id, "name": agent.name}
+            agents.append(agent_info)
+        return agents
+
+    def set_output_instruction_text_for_env(self, env_name, output_instruction_text):
+        """
+        Sets the output instruction text for an environment.
+
+        :param env_name                 :
+
+        :param output_instruction_text  :
+
+        :return                         :
+        """
+        self.environments[env_name].set_output_instruction_text(output_instruction_text)
+
+    def set_action_description_for_agent(self, env_name, agent_id, action_description):
+        """
+        Sets the action description for an agent in the environment.
+
+        :param env_name             : Name of the environment.
+
+        :param agent_id             : ID of the agent.
+
+        :param action_description   : Action description for the agent.
+
+        :return                     : None
+        """
+        env = self.environments[env_name]
+
+        for agent in env.agents:
+            if agent.id == agent_id:
+                variables = {
+                    "name": agent.name,
+                    "goal": f"Reach the target position at {env.target}.",
+                    "actions": action_description,
+                }
+                system_prompt = self.__prompt_map[env_name]
+                system_prompt.set_variables(variables)
+                system_prompt_str = str(system_prompt)
+                system_prompt_str += env.output_instruction_text
+                agent.set_system_prompt(system_prompt_str)
+                break
 
 
     def remove_environment(self, env_name):
@@ -84,4 +144,33 @@ if __name__ == "__main__":
     simulator = Simulator()
     simulator.add_environment(EnvironmentNames.GRID_WORLD.value)
     simulator.define_target_for_environment(EnvironmentNames.GRID_WORLD.value, (4, 4))
+
+    output_instruction_text = """
+        You are required to respond in JSON format only.
+
+        Your response must include the following keys:
+        1. **action_name**: The name of the action you intend to perform.
+        2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
+        3. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
+
+        Here is an example of the expected format:
+
+        {
+          "action_name": "up",
+          "action_parameters": {"steps": 1},
+          "rationale": "Moving up to get closer to the target position."
+        }
+
+        Remember, you must always output a JSON response following this structure.
+        """
+    simulator.set_output_instruction_text_for_env(EnvironmentNames.GRID_WORLD.value, output_instruction_text)
+
+    actions_description = """
+       - **north**: Move one step upward on the grid.
+       - **south**: Move one step downward on the grid.
+       - **west**: Move one step to the left on the grid.
+       - **east**: Move one step to the right on the grid.
+       """
+    simulator.set_action_description_for_agent(EnvironmentNames.GRID_WORLD.value, 0, actions_description )
+
     simulator.run_environment(EnvironmentNames.GRID_WORLD.value)

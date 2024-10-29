@@ -37,6 +37,7 @@ class EnvManager:
          """
         self.agents = []
         self.target = None
+        self.output_instruction_text = None
         env_name = env_name.lower()
         if env_name not in (env.value for env in EnvironmentNames):
             raise ValueError("Invalid environment name")
@@ -61,6 +62,16 @@ class EnvManager:
         :return         :   None
         """
         self.target = target
+
+    def set_output_instruction_text(self, output_instruction_text):
+        """
+        Sets the output instruction text for this environment.
+
+        :param output_instruction_text  : Output instruction text for this environment.
+
+        :return                         : None
+        """
+        self.output_instruction_text = output_instruction_text
 
     def run(self, num_episodes):
         """
