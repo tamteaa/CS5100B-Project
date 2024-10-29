@@ -4,12 +4,12 @@ It defines a specific environment, number of agents in that environment,
 and the actions to take.
 """
 from dotenv import load_dotenv
-
 from src.agent.base_agent import Agent
 from src.agent.prompts import PromptLoader
 from src.environments.custom_environments.gridworld_environment import GridworldEnvironment
 from src.envwrapper.env_names import EnvironmentNames
 
+# Loading the env file.
 load_dotenv()
 
 class EnvManager:
@@ -23,6 +23,16 @@ class EnvManager:
     }
 
     def __init__(self, env_name, agents, **kwargs):
+        """
+        The constructor of the EnvManager class.
+
+        :param env_name : The name of the environment.
+
+        :param agents   : Number of agents in the environment.
+
+        :param kwargs   : used to spin up the environment object. If no kwarg is specified, it will use the
+                          default settings for environment.
+         """
         self.agents = []
         env_name = env_name.lower()
         if env_name not in (env.value for env in EnvironmentNames):
@@ -38,5 +48,5 @@ class EnvManager:
             agent = Agent(agent_id, name, action_space, str(system_prompt))
             self.agents.append(agent)
 
-    def run(self):
+    def run(self, num_episodes):
         pass
