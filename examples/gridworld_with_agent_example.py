@@ -36,7 +36,7 @@ if __name__ == '__main__':
     Here is an example of the expected format:
 
     {
-      "action_name": "up",
+      "action_name": "north",
       "action_parameters": {"steps": 1},
       "rationale": "Moving up to get closer to the target position."
     }
