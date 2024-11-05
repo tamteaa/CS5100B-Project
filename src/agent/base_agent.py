@@ -20,6 +20,8 @@ class Agent:
 
         self.messages = []
 
+        self.inbox = []
+
         self.backend_map = {"groq": GroqBackend}
         if backend != "groq":
             raise KeyError("Must use groq as backend")
@@ -28,6 +30,11 @@ class Agent:
 
         # setting system prompt here for now
         self.set_system_prompt(system_prompt)
+
+    def add_inbox_message(self, name_from: str, msg: str):
+        message = f"From: {name_from}\nMessage: {msg}\n"
+
+        self.inbox.append(message)
 
     def add_user_message(self, message: str):
         """
