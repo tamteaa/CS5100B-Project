@@ -51,6 +51,7 @@ if __name__ == '__main__':
         "goal": f"Reach the target position at {target_position}.",
         "actions": actions_description,
     }
+
     system_prompt.set_variables(variables)
 
     system_prompt_str = str(system_prompt)

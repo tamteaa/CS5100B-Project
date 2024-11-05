@@ -15,5 +15,3 @@ You are an Agent in a simulated environment, your mission is to strategically in
 [Action Space]
 - **Actions**:
 <<actions>>
-
-<<output>>
