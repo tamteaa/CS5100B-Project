@@ -1,4 +1,7 @@
 import time
+import threading
+import platform
+import dearpygui.dearpygui as dpg
 
 from src.environments.custom_environments.complex_gridworld_environment import ComplexGridworld, Square, Item
 from src.agent.base_agent import Agent
@@ -7,9 +10,67 @@ from dotenv import load_dotenv
 from src.gui.gui import GUI
 from src.agent.actions import Action, format_actions
 
-
-# load the GROQ API KEY from a .env file
+# Load the GROQ API KEY from a .env file
 load_dotenv("../.env")
+
+# Determine if we're running on macOS
+is_mac = platform.system() == "Darwin"
+
+
+# Define the simulation logic in a function
+def run_simulation(env, agents, target_position, gui):
+    # Initial observation of the agent's position
+    observation = env.get_agent_position(0)
+    observation_str = f"Your current position is: {observation}"
+
+    print("Starting Gridworld Simulation...\n")
+    agent_reached_target = False
+
+    # Define the maximum number of episodes (steps)
+    max_episodes = 10
+
+    for episode in range(max_episodes):
+        time.sleep(1)
+        print("=" * 20 + f" Episode {episode + 1} of {max_episodes} " + "=" * 20 + "\n")
+
+        for agent_id, agent in agents.items():
+            print(f"Agent {agent_id} Observation: {observation_str}")
+
+            # Agent makes a decision based on the current observation
+            action = agent.step(observation_str)
+
+            # Extract the action name from the agent's response
+            action_name = action.get("action_name", "invalid")
+            print(f"Agent {agent_id} Action: {action_name}")
+            print(f"Rationale: {action.get('rationale', 'No rationale provided.')}\n")
+
+            # Execute the action in the environment
+            observation_str = env.step(agent_id, action_name)
+
+            # Get the agent's current position
+            agents_position = env.get_agent_position(agent_id)
+            print(f"Agent {agent_id} Current Position: {agents_position}\n")
+
+            # Check if the agent has reached the target position
+            if agents_position == target_position:
+                agent_reached_target = True
+                print(f"Agent {agent_id} has reached the target position {target_position}!")
+                break
+
+        print("\n" + "=" * 50 + "\n")
+
+        if agent_reached_target:
+            time.sleep(1)
+            break
+
+    # Final summary
+    if agent_reached_target:
+        print("Simulation Complete: The agent successfully reached the target position!")
+    else:
+        print("Simulation Complete: The agent did not reach the target position within the maximum number of episodes.")
+
+    # Stop the GUI when the simulation ends
+    gui.is_running = False
 
 if __name__ == '__main__':
     # Define start positions for multiple agents
@@ -87,56 +148,19 @@ if __name__ == '__main__':
         ]
     )
 
-    # Define the maximum number of episodes (steps)
-    max_episodes = 10
-
-    # Initial observation of the agent's position
-    observation = env.get_agent_position(0)
-    observation_str = f"Your current position is: {observation}"
-
-    print("Starting Gridworld Simulation...\n")
-    agent_reached_target = False
-
     gui = GUI(env, agents)
 
-    with gui:
-        time.sleep(5)
-        for episode in range(max_episodes):
-            time.sleep(5)
-            print("=" * 20 + f" Episode {episode + 1} of {max_episodes} " + "=" * 20 + "\n")
+    # Start the simulation thread before starting the GUI main loop
+    simulation_thread = threading.Thread(
+        target=run_simulation, args=(env, agents, target_position, gui)
+    )
+    simulation_thread.start()
 
-            for agent_id, agent in agents.items():
-                print(f"Agent {agent_id} Observation: {observation_str}")
+    # Start the GUI main loop (blocks the main thread)
+    gui.start()
 
-                # Agent makes a decision based on the current observation
-                action = agent.step(observation_str)
+    # Wait for the simulation thread to finish
+    simulation_thread.join()
 
-                # Extract the action name from the agent's response
-                action_name = action.get("action_name", "invalid")
-                print(f"Agent {agent_id} Action: {action_name}")
-                print(f"Rationale: {action.get('rationale', 'No rationale provided.')}\n")
-
-                # Execute the action in the environment
-                observation_str = env.step(agent_id, action_name)
-
-                # Get the agent's current position
-                agents_position = env.get_agent_position(agent_id)
-                print(f"Agent {agent_id} Current Position: {agents_position}\n")
-
-                # Check if the agent has reached the target position
-                if agents_position == target_position:
-                    agent_reached_target = True
-                    print(f"Agent {agent_id} has reached the target position {target_position}!")
-                    break
-
-            print("\n" + "=" * 50 + "\n")
-
-            if agent_reached_target:
-                time.sleep(1)
-                break
-
-        # Final summary
-        if agent_reached_target:
-            print("Simulation Complete: The agent successfully reached the target position!")
-        else:
-            print("Simulation Complete: The agent did not reach the target position within the maximum number of episodes.")
+    # Close the GUI
+    gui.close()
