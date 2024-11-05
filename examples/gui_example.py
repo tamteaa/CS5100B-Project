@@ -16,6 +16,7 @@ load_dotenv("../.env")
 # Determine if we're running on macOS
 is_mac = platform.system() == "Darwin"
 
+
 # Define the simulation logic in a function
 def run_simulation(env, agents, target_position, gui):
     # Initial observation of the agent's position
