@@ -2,92 +2,75 @@ import dearpygui.dearpygui as dpg
 from src.environments.custom_environments.complex_gridworld_environment import ComplexGridworld
 from src.gui.gridworld_view import GridWorldView
 from src.gui.informational_panel import InfoPanelView
+import platform
+import time
 import threading
-from time import sleep
 
 
 class GUI:
     def __init__(self, gridworld: ComplexGridworld, agents):
         self.gridworld = gridworld
+        self.agents = agents
         self.is_running = True
         self.view = GridWorldView()
         self.info_panel = InfoPanelView(agents)
         self.initial_width = 800
         self.initial_height = 800
+        self.is_mac = platform.system() == "Darwin"
 
         # Initialize DearPyGUI context
         dpg.create_context()
+        self._setup_gui()
 
-        # Create the main window
+    def _setup_gui(self):
         with dpg.window(label="Simulation", tag="primary_window", no_close=True):
-            # Create horizontal layout with dynamic width
-            with dpg.group(horizontal=True, tag="main_group"):
-                # Left panel for grid (50% width) - no scrollbars
-                with dpg.child_window(tag="left_panel",
-                                    width=self.initial_width // 2,
-                                    height=self.initial_height,
-                                    horizontal_scrollbar=False,
-                                    no_scrollbar=True):
-                    with dpg.drawlist(width=self.initial_width // 2,
-                                    height=self.initial_height,
-                                    tag="grid_canvas"):
-                        pass
+            with dpg.group(horizontal=True):
+                with dpg.group(tag="left_group"):
+                    dpg.add_drawlist(width=self.initial_width // 2,
+                                     height=self.initial_height,
+                                     tag="grid_canvas")
+                with dpg.group(tag="right_group"):
+                    dpg.add_group(tag="info_panel")
 
-                # Right panel for info (50% width) - only vertical scrollbar
-                with dpg.child_window(tag="right_panel",
-                                    width=self.initial_width // 2,
-                                    height=self.initial_height,
-                                    horizontal_scrollbar=False):
-                    with dpg.group(tag="info_panel"):
-                        pass
-
-        # Handler for window resize
-        def resize_callback():
-            viewport_width = dpg.get_viewport_client_width()
-            viewport_height = dpg.get_viewport_client_height()
-
-            # Update window size
-            dpg.configure_item("primary_window", width=viewport_width, height=viewport_height)
-
-            # Update panels (each 50% of width)
-            panel_width = viewport_width // 2
-            dpg.configure_item("left_panel", width=panel_width, height=viewport_height)
-            dpg.configure_item("right_panel", width=panel_width, height=viewport_height)
-            dpg.configure_item("grid_canvas", width=panel_width, height=viewport_height)
-
-        dpg.set_viewport_resize_callback(resize_callback)
-
-    def _run_gui(self):
-        # Configure and show viewport
         dpg.create_viewport(title="GridWorld Simulation",
-                          width=self.initial_width,
-                          height=self.initial_height,
-                          resizable=True)
+                            width=self.initial_width,
+                            height=self.initial_height,
+                            resizable=True)
+
+        dpg.set_viewport_resize_callback(self._resize_callback)
         dpg.setup_dearpygui()
-        dpg.show_viewport()
-        dpg.set_primary_window("primary_window", True)
 
-        # Main render loop
-        while self.is_running:
+    def _resize_callback(self):
+        viewport_width = dpg.get_viewport_client_width()
+        viewport_height = dpg.get_viewport_client_height()
+        dpg.configure_item("primary_window", width=viewport_width, height=viewport_height)
+        panel_width = viewport_width // 2
+        dpg.configure_item("grid_canvas", width=panel_width, height=viewport_height)
+
+    def _render_frame(self):
+        """Render a single frame"""
+        if dpg.does_item_exist("grid_canvas"):
+            dpg.delete_item("grid_canvas", children_only=True)
             self.view.draw_gridworld(self.gridworld, "grid_canvas")
-            self.info_panel.update_agent_info(self.gridworld, "info_panel")
-            dpg.render_dearpygui_frame()
-            sleep(0.01)
 
-        dpg.destroy_context()
+        if dpg.does_item_exist("info_panel"):
+            dpg.delete_item("info_panel", children_only=True)
+            self.info_panel.update_agent_info(self.gridworld, "info_panel")
+
+    def _start_dearpygui(self):
+        """Start DearPyGUI main loop"""
+        while dpg.is_dearpygui_running() and self.is_running:
+            self._render_frame()
+            dpg.render_dearpygui_frame()
+            time.sleep(0.033)  # ~30 FPS
 
     def start(self):
-        self.gui_thread = threading.Thread(target=self._run_gui)
-        self.gui_thread.start()
+        """Start the GUI"""
+        dpg.show_viewport()
+        dpg.set_primary_window("primary_window", True)
+        self._start_dearpygui()
 
     def close(self):
+        """Close the GUI"""
         self.is_running = False
-        if hasattr(self, 'gui_thread'):
-            self.gui_thread.join()
-
-    def __enter__(self):
-        self.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        dpg.destroy_context()
