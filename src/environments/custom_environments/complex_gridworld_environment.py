@@ -41,6 +41,10 @@ class ComplexGridworld:
         self.grid = [[Square() for _ in range(grid_size[1])] for _ in range(grid_size[0])]
         self.agents = agents if agents else {}
 
+        # environment termination
+        self.termination_callbacks = []
+        self.terminated: bool = False
+
         # Initialize agent positions
         for agent_id, agent in self.agents.items():
             row, col = agent.position
@@ -102,6 +106,9 @@ class ComplexGridworld:
         elif action == 'west':
             new_col = max(0, col - 1)
 
+        if action == "skip":
+            return "You skipped your turn."
+
         # Check if the new position is different from the current position
         if (new_row, new_col) == (row, col):
             return f"Agent {agent_id} tried to move '{action}', but it cannot move further in that direction."
@@ -115,6 +122,11 @@ class ComplexGridworld:
         agent.position = (new_row, new_col)
         self.grid[new_row][new_col].agent = agent
 
+        # Check termination conditions
+        if all(callback(self) for callback in self.termination_callbacks):
+            self.terminated = True
+            return "The environment has reached a termination condition."
+
         return f"Agent {agent_id} moved '{action}' from {(row, col)} to {(new_row, new_col)}."
 
     def get_agent_position(self, agent_id: int):
@@ -122,9 +134,9 @@ class ComplexGridworld:
         agent = self.agents.get(agent_id)
         return agent.position if agent else None
 
-    def get_all_agent_positions(self) -> Dict[int, Tuple[int, int]]:
-        """Get positions of all agents."""
-        return {agent_id: agent.position for agent_id, agent in self.agents.items()}
+    def register_termination_callback(self, func):
+        """Register a termination callback."""
+        self.termination_callbacks.append(func)
 
-    def termination_callback(self, func):
-        pass
+    def iter_agents(self):
+        re
