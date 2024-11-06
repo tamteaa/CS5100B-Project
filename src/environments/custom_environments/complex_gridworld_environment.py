@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Tuple, Dict, List
+from src.agent.base_agent import Agent  # Make sure you have the correct import path for your Agent class
 
 
 class Item:
@@ -15,11 +16,11 @@ class Item:
 class Square:
     def __init__(self, obstacle: bool = False, items: List[Item] = None):
         self.obstacle = obstacle
-        self.agent_id = None
+        self.agent = None  # Store the entire Agent object
         self.items = items if items else []
 
     def is_empty(self):
-        return not self.obstacle and self.agent_id is None and not self.items
+        return not self.obstacle and self.agent is None and not self.items
 
     def has_items(self):
         return bool(self.items)
@@ -32,16 +33,18 @@ class ComplexGridworld:
     def __init__(
             self,
             grid_size: Tuple[int, int] = (10, 10),
-            start_positions: Dict[int, Tuple[int, int]] = None,
+            agents: Dict[int, Agent] = None,
             obstacles: List[Tuple[int, int]] = None,
             items: Dict[Tuple[int, int], List[Item]] = None
     ):
-
         self.grid_size = grid_size
         self.grid = [[Square() for _ in range(grid_size[1])] for _ in range(grid_size[0])]
-        self.start_positions = start_positions if start_positions else {0: (0, 0)}
-        self.agent_positions = self.start_positions.copy()
-        self.agents = set(self.start_positions.keys())
+        self.agents = agents if agents else {}
+
+        # Initialize agent positions
+        for agent_id, agent in self.agents.items():
+            row, col = agent.position
+            self.grid[row][col].agent = agent
 
         # Place obstacles
         if obstacles:
@@ -52,10 +55,6 @@ class ComplexGridworld:
         if items:
             for (row, col), item_list in items.items():
                 self.grid[row][col].items.extend(item_list)
-
-        # Place agents in their starting positions
-        for agent_id, pos in self.agent_positions.items():
-            self.grid[pos[0]][pos[1]].agent_id = agent_id
 
     def __getitem__(self, key):
         """Support both single index and tuple index access."""
@@ -76,25 +75,24 @@ class ComplexGridworld:
         """Resets the environment to its initial state."""
         for row in range(self.grid_size[0]):
             for col in range(self.grid_size[1]):
-                self.grid[row][col].agent_id = None
+                self.grid[row][col].agent = None
 
-        self.agent_positions = self.start_positions.copy()
-        for agent_id, pos in self.agent_positions.items():
-            self.grid[pos[0]][pos[1]].agent_id = agent_id
-        return self.agent_positions
+        for agent_id, agent in self.agents.items():
+            row, col = agent.position
+            self.grid[row][col].agent = agent
 
-    def step(self, agent_id: int, action: str) ->  str:
+    def step(self, agent_id: int, action: str) -> str:
         """Execute a step for the specified agent."""
-        if agent_id not in self.agent_positions:
+        agent = self.agents.get(agent_id)
+        if not agent:
             return f"Agent ID {agent_id} not found in the environment."
 
         if action not in ['north', 'south', 'east', 'west']:
             return f"Invalid action: '{action}'. Valid actions are ['north', 'south', 'east', 'west']."
 
-        current_pos = self.agent_positions[agent_id]
-        row, col = current_pos
-
+        row, col = agent.position
         new_row, new_col = row, col
+
         if action == 'north':
             new_row = min(self.grid_size[0] - 1, row + 1)
         elif action == 'south':
@@ -113,16 +111,20 @@ class ComplexGridworld:
             return "Cannot move into obstacle."
 
         # Update grid and agent's position
-        self.grid[row][col].agent_id = None
-        self.agent_positions[agent_id] = (new_row, new_col)
-        self.grid[new_row][new_col].agent_id = agent_id
+        self.grid[row][col].agent = None
+        agent.position = (new_row, new_col)
+        self.grid[new_row][new_col].agent = agent
 
-        return f"Agent {agent_id} moved '{action}' from {current_pos} to {(new_row, new_col)}."
+        return f"Agent {agent_id} moved '{action}' from {(row, col)} to {(new_row, new_col)}."
 
     def get_agent_position(self, agent_id: int):
         """Get the position of a specific agent."""
-        return self.agent_positions.get(agent_id, None)
+        agent = self.agents.get(agent_id)
+        return agent.position if agent else None
 
     def get_all_agent_positions(self) -> Dict[int, Tuple[int, int]]:
         """Get positions of all agents."""
-        return self.agent_positions.copy()
+        return {agent_id: agent.position for agent_id, agent in self.agents.items()}
+
+    def termination_callback(self, func):
+        pass

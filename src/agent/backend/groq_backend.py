@@ -6,7 +6,7 @@ import os
 class GroqBackend(Backend):
     def __init__(
             self,
-            model_id: str = "llama3-8b-8192"
+            model_id: str = "llama-3.1-8b-instant"
     ):
         super().__init__("groq")
         self.client = Groq(api_key=os.environ.get("GROQ_API_KEY"))

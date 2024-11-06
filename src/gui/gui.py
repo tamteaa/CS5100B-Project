@@ -8,8 +8,8 @@ import threading
 
 
 class GUI:
-    def __init__(self, gridworld: ComplexGridworld, agents):
-        self.gridworld = gridworld
+    def __init__(self, env: ComplexGridworld, agents):
+        self.env = env
         self.agents = agents
         self.is_running = True
         self.view = GridWorldView()
@@ -51,11 +51,11 @@ class GUI:
         """Render a single frame"""
         if dpg.does_item_exist("grid_canvas"):
             dpg.delete_item("grid_canvas", children_only=True)
-            self.view.draw_gridworld(self.gridworld, "grid_canvas")
+            self.view.draw_gridworld(self.env, "grid_canvas")
 
         if dpg.does_item_exist("info_panel"):
             dpg.delete_item("info_panel", children_only=True)
-            self.info_panel.update_agent_info(self.gridworld, "info_panel")
+            self.info_panel.update_agent_info(self.env, "info_panel")
 
     def _start_dearpygui(self):
         """Start DearPyGUI main loop"""
@@ -74,3 +74,18 @@ class GUI:
         """Close the GUI"""
         self.is_running = False
         dpg.destroy_context()
+
+    def run(self, sim_func, target_function):
+        simulation_thread = threading.Thread(
+            target=sim_func, args=(self.env, target_function, self)
+        )
+        simulation_thread.start()
+
+        # Start the GUI main loop (blocks the main thread)
+        self.start()
+
+        # Wait for the simulation thread to finish
+        simulation_thread.join()
+
+        # Close the GUI
+        self.close()

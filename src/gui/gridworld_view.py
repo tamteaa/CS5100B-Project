@@ -78,7 +78,7 @@ class GridWorldView:
                 self.draw_square(tag, top_left, bottom_right, fill_color)
 
                 # Draw agent or items
-                if square.agent_id is not None:
+                if square.agent is not None:
                     self.draw_square(tag, top_left, bottom_right, (255, 0, 0))
                 elif square.has_items():
                     item = square.items[0]

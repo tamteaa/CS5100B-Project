@@ -1,7 +1,5 @@
 import time
-import threading
 import platform
-import dearpygui.dearpygui as dpg
 
 from src.environments.custom_environments.complex_gridworld_environment import ComplexGridworld, Square, Item
 from src.agent.base_agent import Agent
@@ -13,16 +11,10 @@ from src.agent.actions import Action, format_actions
 # Load the GROQ API KEY from a .env file
 load_dotenv("../.env")
 
-# Determine if we're running on macOS
-is_mac = platform.system() == "Darwin"
-
 
 # Define the simulation logic in a function
-def run_simulation(env, agents, target_position, gui):
+def run_simulation(env, target_position, gui):
     # Initial observation of the agent's position
-    observation = env.get_agent_position(0)
-    observation_str = f"Your current position is: {observation}"
-
     print("Starting Gridworld Simulation...\n")
     agent_reached_target = False
 
@@ -32,12 +24,17 @@ def run_simulation(env, agents, target_position, gui):
     for episode in range(max_episodes):
         time.sleep(1)
         print("=" * 20 + f" Episode {episode + 1} of {max_episodes} " + "=" * 20 + "\n")
+        for agent_id, agent in env.agents.items():
+            observation = env.get_agent_position(agent_id)
+            agent.observation = f"Your current position is: {observation}"
 
-        for agent_id, agent in agents.items():
-            print(f"Agent {agent_id} Observation: {observation_str}")
+        for agent_id, agent in env.agents.items():
+            if agent.termination_condition:
+                break
+            print(f"Agent {agent_id} Observation: {agent.observation}")
 
             # Agent makes a decision based on the current observation
-            action = agent.step(observation_str)
+            action = agent.step(agent.observation)
 
             # Extract the action name from the agent's response
             action_name = action.get("action_name", "invalid")
@@ -45,7 +42,7 @@ def run_simulation(env, agents, target_position, gui):
             print(f"Rationale: {action.get('rationale', 'No rationale provided.')}\n")
 
             # Execute the action in the environment
-            observation_str = env.step(agent_id, action_name)
+            agent.observation = env.step(agent.id, action_name)
 
             # Get the agent's current position
             agents_position = env.get_agent_position(agent_id)
@@ -53,9 +50,8 @@ def run_simulation(env, agents, target_position, gui):
 
             # Check if the agent has reached the target position
             if agents_position == target_position:
-                agent_reached_target = True
+                agent.termination_condition = True
                 print(f"Agent {agent_id} has reached the target position {target_position}!")
-                break
 
         print("\n" + "=" * 50 + "\n")
 
@@ -72,15 +68,13 @@ def run_simulation(env, agents, target_position, gui):
     # Stop the GUI when the simulation ends
     gui.is_running = False
 
+
 if __name__ == '__main__':
     # Define start positions for multiple agents
-    start_positions = {0: (0, 0)}
 
     prompts = PromptLoader()
 
     system_prompt = prompts.load_prompt("gridworld_system_prompt")
-
-    agent_name = "Llama-agent-v1"
 
     actions = [
         Action(name="north", description="Move one step upward on the grid."),
@@ -112,6 +106,7 @@ if __name__ == '__main__':
     """
 
     target_position = (4, 4)
+    agent_name = "Llama-agent-v1"
 
     variables = {
         "name": agent_name,
@@ -124,19 +119,34 @@ if __name__ == '__main__':
     system_prompt_str = str(system_prompt)
     system_prompt_str += output_instruction_text
 
-    print(system_prompt_str)
+    agent_one = Agent(
+        agent_id=0,
+        name=agent_name,
+        action_space=[], # doesn't do anything currently
+        system_prompt=system_prompt_str,
+        start_position=(0, 0),
+        color=(0, 0, 0)
+    )
+
+    agent_two = Agent(
+        agent_id=1,
+        name=agent_name + "2",
+        action_space=[], # doesn't do anything currently
+        system_prompt=system_prompt_str,
+        start_position=(2, 2),
+        color=(0, 0, 0)
+    )
 
     agents = {
-        0: Agent(
-            agent_id=0,
-            name=agent_name,
-            action_space=[],
-            system_prompt=system_prompt_str
-        )
+        agent_one.id: agent_one,
+        agent_two.id: agent_two
     }
 
     # Initialize the gridworld environment
-    env = ComplexGridworld(grid_size=(10, 10), start_positions=start_positions)
+    env = ComplexGridworld(
+        grid_size=(10, 10),
+        agents=agents
+    )
 
     env[target_position[0], target_position[1]] = Square(
         items=[
@@ -150,17 +160,5 @@ if __name__ == '__main__':
 
     gui = GUI(env, agents)
 
-    # Start the simulation thread before starting the GUI main loop
-    simulation_thread = threading.Thread(
-        target=run_simulation, args=(env, agents, target_position, gui)
-    )
-    simulation_thread.start()
+    gui.run(run_simulation, target_position)
 
-    # Start the GUI main loop (blocks the main thread)
-    gui.start()
-
-    # Wait for the simulation thread to finish
-    simulation_thread.join()
-
-    # Close the GUI
-    gui.close()

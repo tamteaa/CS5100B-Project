@@ -2,6 +2,7 @@ from envManager import EnvManager
 from src.agent.prompts import PromptLoader
 from src.envwrapper.env_names import EnvironmentNames
 
+
 class Simulator:
     """
     This is the main simulator class. It provides a common interface to manage and run environments.
@@ -171,6 +172,6 @@ if __name__ == "__main__":
        - **west**: Move one step to the left on the grid.
        - **east**: Move one step to the right on the grid.
        """
-    simulator.set_action_description_for_agent(EnvironmentNames.GRID_WORLD.value, 0, actions_description )
+    simulator.set_action_description_for_agent(EnvironmentNames.GRID_WORLD.value, 0, actions_description)
 
     simulator.run_environment(EnvironmentNames.GRID_WORLD.value)
