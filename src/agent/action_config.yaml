@@ -1,0 +1,20 @@
+gridworld:
+  - name: "north"
+    description: "Move north by a certain number of steps."
+    parameters:
+      steps: 1
+  - name: "south"
+    description: "Move south by a certain number of steps."
+    parameters:
+      steps: 1
+  - name: "east"
+    description: "Move east by a certain number of steps."
+    parameters:
+      steps: 1
+  - name: "west"
+    description: "Move west by a certain number of steps."
+    parameters:
+      steps: 1
+  - name: "skip"
+    description: "Do nothing and skip this step."
+    parameters: {}
