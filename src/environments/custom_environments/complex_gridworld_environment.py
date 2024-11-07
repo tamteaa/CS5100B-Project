@@ -139,4 +139,4 @@ class ComplexGridworld:
         self.termination_callbacks.append(func)
 
     def iter_agents(self):
-        re
+        pass
