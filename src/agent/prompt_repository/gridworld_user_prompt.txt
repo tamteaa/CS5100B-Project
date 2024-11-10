@@ -1,0 +1,14 @@
+[observation]'
+
+Your current goal is: <<goal>>'
+
+The observation from your previous action is:
+<<observation>>
+
+Your current position:
+    x-position: <<x_position>>
+    y-position: <<y_position>>
+
+Your current inbox reads:
+<<inbox>>
+

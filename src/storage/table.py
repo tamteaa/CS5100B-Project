@@ -1,68 +1,51 @@
-import sqlite3
-import json
-from typing import Dict, Any, List, Optional
 
 
 class Table:
-    def __init__(self, connection: sqlite3.Connection, name: str, columns: Dict[str, str]):
+    def __init__(self, name, columns=None):
         """
-        Initializes the Table with a name, columns, and an active database connection.
-
-        :param connection: The SQLite database connection.
-        :param name: Name of the table.
-        :param columns: A dictionary where keys are column names and values are SQLite data types.
+        Initialize the table with a name and optional columns.
+        Columns should be defined as a dictionary with column names as keys
+        and data types as values, e.g., {'name': 'TEXT', 'age': 'INTEGER'}.
         """
-        self.connection = connection
         self.name = name
-        self.columns = columns
-        self.cursor = self.connection.cursor()
-        self.create_table()
+        self.columns = columns if columns is not None else {}
+        self.data = []
 
-    def create_table(self) -> None:
-        """Creates a table in the database based on the specified columns."""
-        columns_def = ', '.join([f"{col_name} {col_type}" for col_name, col_type in self.columns.items()])
-        create_query = f"CREATE TABLE IF NOT EXISTS {self.name} ({columns_def})"
-        self.cursor.execute(create_query)
-        self.connection.commit()
+    def create_table_sql(self):
+        """Generate a SQL CREATE TABLE statement."""
+        columns_def = ", ".join([f"{col} {dtype}" for col, dtype in self.columns.items()])
+        return f"CREATE TABLE {self.name} ({columns_def});"
 
-    def insert(self, **kwargs: Any) -> None:
+    def insert_row(self, row):
         """
-        Inserts a row into the table, automatically serializing dictionaries or lists to JSON.
-
-        :param kwargs: Column-value pairs for the row to insert.
+        Insert a row of data.
+        The row should be a dictionary mapping column names to values.
         """
-        # Serialize dictionaries and lists to JSON strings automatically
-        serialized_values = {
-            key: (json.dumps(value) if isinstance(value, (dict, list)) else value)
-            for key, value in kwargs.items()
-        }
+        if not set(row.keys()).issubset(self.columns.keys()):
+            raise ValueError("Row contains invalid column names.")
+        self.data.append(row)
 
-        columns = ', '.join(serialized_values.keys())
-        placeholders = ', '.join(['?' for _ in serialized_values])
-        insert_query = f"INSERT INTO {self.name} ({columns}) VALUES ({placeholders})"
-        self.cursor.execute(insert_query, tuple(serialized_values.values()))
-        self.connection.commit()
+    def select_all(self):
+        """Simulate a SQL SELECT * FROM table;"""
+        return self.data
 
-    def fetch_all(self) -> List[tuple]:
-        """
-        Fetches all rows from the table.
+    def select_where(self, column, value):
+        """Simulate a SQL SELECT * FROM table WHERE column = value;"""
+        if column not in self.columns:
+            raise ValueError(f"Column '{column}' does not exist.")
+        return [row for row in self.data if row.get(column) == value]
 
-        :return: List of rows in the table.
-        """
-        select_query = f"SELECT * FROM {self.name}"
-        self.cursor.execute(select_query)
-        return self.cursor.fetchall()
+    def display(self):
+        """Display the table in a tabular format, similar to SQL query results."""
+        if not self.data:
+            print(f"Table '{self.name}' is empty.")
+            return
 
-    def fetch_by_column(self, column_name: str, value: Any) -> List[tuple]:
-        """
-        Fetches rows where a specific column matches a given value.
+        # Print the column headers
+        print(f"{' | '.join(self.columns.keys())}")
+        print("-" * (len(self.columns) * 10))
 
-        :param column_name: The column to filter by.
-        :param value: The value to match.
-        :return: List of matching rows.
-        """
-        query = f"SELECT * FROM {self.name} WHERE {column_name} = ?"
-        self.cursor.execute(query, (value,))
-        return self.cursor.fetchall()
-
+        # Print the rows
+        for row in self.data:
+            print(" | ".join(str(row.get(col, '')) for col in self.columns.keys()))
 
