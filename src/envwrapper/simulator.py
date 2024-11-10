@@ -174,3 +174,15 @@ if __name__ == "__main__":
     simulator.set_action_description_for_agent(EnvironmentNames.GRID_WORLD.value, 0, actions_description )
 
     simulator.run_environment(EnvironmentNames.GRID_WORLD.value)
+
+
+
+    """
+    Write a config file for env. Put all things needed by env in the file. Have simulator load it and initialize env.
+    Connect simulator with DB. (Priority)
+    Logging.
+    
+    Complex grid world.
+    Debug multi-env.
+    Messaging layer.
+    """
