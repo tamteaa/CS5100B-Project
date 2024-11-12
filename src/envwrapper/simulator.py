@@ -6,6 +6,8 @@ from src.envwrapper.env_names import EnvironmentNames
 from src.agent.actions import Action
 import re
 
+from src.storage.database import DatabaseManager
+
 
 class Simulator:
     """
@@ -21,6 +23,7 @@ class Simulator:
         Initializes an empty dictionary to keep track of each environment.
         """
         self.environments = {}
+        self.db_manager = DatabaseManager()
 
     def add_environment(self, env_name):
         """
@@ -137,7 +140,7 @@ class Simulator:
         :return             : None
         """
         for env in self.environments.values():
-            env.run(max_episodes)
+            env.run(max_episodes, self.db_manager)
 
 
     def __parse_action_description(self, action_description_string):
@@ -175,7 +178,7 @@ if __name__ == "__main__":
     simulator = Simulator()
     simulator.load_environment_config("env_config.yaml")
     simulator.define_target_for_environment(EnvironmentNames.GRID_WORLD.value, (4, 4))
-    simulator.run_environment(EnvironmentNames.COMPLEX_GRID_WORLD.value)
+    #simulator.run_environment(EnvironmentNames.COMPLEX_GRID_WORLD.value)
     simulator.run_all()
 
 

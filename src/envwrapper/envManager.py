@@ -119,11 +119,13 @@ class EnvManager:
         """
         self.output_instruction_text = output_instruction_text
 
-    def run(self, num_episodes):
+    def run(self, num_episodes, db_manager=None):
         """
         Runs the specified number of episodes.
 
         :param num_episodes :   Number of episodes to run.
+
+        :param db_manager :    Database manager object.
 
         :return             :   None
         """
@@ -157,6 +159,13 @@ class EnvManager:
                 agents_position = self.env.get_agent_position(agent.id)
                 print(f"Agent {agent.id} Current Position: {agents_position}")
 
+                if db_manager is not None:
+                    db_manager['episodes'].insert_row({
+                        "episode_id":   episode,
+                        "agent_id": agent.id,
+                        "history": [{"action": action, "result": observation_str}]}
+                    )
+
                 # Check if the agent has reached the target position
                 if self.is_target_achieved(agent):
                     agent_reached_target = True
@@ -164,7 +173,6 @@ class EnvManager:
                     break
 
             print("*" * 50)
-
             if agent_reached_target:
                 break
 
