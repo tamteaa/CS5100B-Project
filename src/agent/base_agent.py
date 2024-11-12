@@ -32,9 +32,9 @@ class Agent:
             agent_id: int,
             name: str,
             action_space: List[Action],
-            start_position: Tuple,
-            color: Tuple,
             variables: Dict,
+            start_position: Tuple = None,
+            color: Tuple = None,
             enforce_json_output: bool = False,
             backend: str = "groq",
             backend_model: str = "llama3-70b-8192",
@@ -109,6 +109,18 @@ class Agent:
         """
         self.messages.insert(0, {"role": "system", "content": prompt})
 
+    def set_action_space(self, action_space: [Action]):
+        self.action_space = action_space
+        actions_description = format_actions(self.action_space)
+        self.variables["actions"] = actions_description
+
+
+    def set_start_position(self, position: Tuple):
+        self.position = position
+
+    def set_agent_color(self, color: Tuple):
+        self.color = color
+
     def step(self):
         """
         Takes an observation, generates a response using the backend,
@@ -131,7 +143,7 @@ class Agent:
         self.user_prompt.set_variables(self.variables)
 
         # Add user observation to messages
-        self.add_user_message(str(self.user_prompt))
+        self.add_user_message(str(self.user_prompt) + " This is the list of valid actions: " + self.variables["actions"] )
 
         # Generate response from backend
         response = self.backend.generate(self.messages)

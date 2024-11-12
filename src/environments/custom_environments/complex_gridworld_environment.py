@@ -85,6 +85,8 @@ class ComplexGridworld:
             row, col = agent.position
             self.grid[row][col].agent = agent
 
+        return None
+
     def step(self, agent_id: int, action: str) -> str:
         """Execute a step for the specified agent."""
         agent = self.agents.get(agent_id)
@@ -140,3 +142,6 @@ class ComplexGridworld:
 
     def iter_agents(self):
         pass
+
+    def set_agents_for_env(self, agents):
+        self.agents = {i: obj for i, obj in enumerate(agents)}
