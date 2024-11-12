@@ -109,8 +109,10 @@ class Agent:
         """
         self.messages.insert(0, {"role": "system", "content": prompt})
 
-    def set_action_space(self, action_space: str):
+    def set_action_space(self, action_space: [Action]):
         self.action_space = action_space
+        actions_description = format_actions(self.action_space)
+        self.variables["actions"] = actions_description
 
     def step(self):
         """
@@ -134,7 +136,7 @@ class Agent:
         self.user_prompt.set_variables(self.variables)
 
         # Add user observation to messages
-        self.add_user_message(str(self.user_prompt))
+        self.add_user_message(str(self.user_prompt) + " This is the list of valid actions: " + self.variables["actions"] )
 
         # Generate response from backend
         response = self.backend.generate(self.messages)

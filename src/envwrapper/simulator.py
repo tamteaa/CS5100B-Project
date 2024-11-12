@@ -82,13 +82,13 @@ class Simulator:
         """
         self.environments[env_name].set_output_instruction_text(output_instruction_text)
 
-    def set_action_description_for_agent(self, env_name, agent_id, action_description):
+    def set_action_description_for_agent(self, env_name, agent_name, action_description):
         """
         Sets the action description for an agent in the environment.
 
         :param env_name             : Name of the environment.
 
-        :param agent_id             : ID of the agent.
+        :param agent_name            : name of the agent.
 
         :param action_description   : Action description for the agent.
 
@@ -97,8 +97,8 @@ class Simulator:
         env = self.environments[env_name]
 
         for agent in env.agents:
-            if agent.id == agent_id:
-                agent.set_action_description(action_description)
+            if agent.name in agent_name:
+                agent.set_action_space(action_description)
                 break
 
 
@@ -164,7 +164,7 @@ class Simulator:
             prompt = environments[env_name]["prompt"]
 
             self.add_environment(env_name)
-            self.create_agents_in_env(env_name, agent_names, unified_goal, prompt)
+            self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text)
             self.set_output_instruction_text_for_env(env_name, output_instruction_text)
             self.set_action_description_for_agent(env_name, agent_names, actions)
 
