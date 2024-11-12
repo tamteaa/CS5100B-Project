@@ -99,7 +99,6 @@ class Simulator:
         for agent in env.agents:
             if agent.name in agent_name:
                 agent.set_action_space(action_description)
-                break
 
 
     def remove_environment(self, env_name):
@@ -167,11 +166,6 @@ class Simulator:
             self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text)
             self.set_output_instruction_text_for_env(env_name, output_instruction_text)
             self.set_action_description_for_agent(env_name, agent_names, actions)
-
-
-
-
-
 
 
 if __name__ == "__main__":

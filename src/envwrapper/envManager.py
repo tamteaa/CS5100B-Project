@@ -8,6 +8,7 @@ import time
 from dotenv import load_dotenv
 from src.agent.base_agent import Agent
 from src.agent.prompts import PromptLoader
+from src.environments.custom_environments.complex_gridworld_environment import ComplexGridworld
 from src.environments.custom_environments.gridworld_environment import GridworldEnvironment
 from src.envwrapper.env_names import EnvironmentNames
 
@@ -17,7 +18,8 @@ load_dotenv()
 class EnvManager:
 
     __env_map = {
-        EnvironmentNames.GRID_WORLD.value: GridworldEnvironment
+        EnvironmentNames.GRID_WORLD.value: GridworldEnvironment,
+        EnvironmentNames.COMPLEX_GRID_WORLD.value: ComplexGridworld
     }
     
     __prompt_map = {
