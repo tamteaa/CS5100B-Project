@@ -1,6 +1,10 @@
+import yaml
+
 from envManager import EnvManager
 from src.agent.prompts import PromptLoader
 from src.envwrapper.env_names import EnvironmentNames
+from src.agent.actions import Action
+import re
 
 
 class Simulator:
@@ -18,20 +22,24 @@ class Simulator:
         """
         self.environments = {}
 
-    def add_environment(self, env_name, num_of_agents = 1):
+    def add_environment(self, env_name):
         """
         Adds a new environment to the simulator.
 
         :param env_name         : Environment name. Must be one specified in :class:`EnvironmentNames`.
 
-        :param num_of_agents    : Number of agents per environment.
-
         :return                 : None
         """
         if env_name not in (env.value for env in EnvironmentNames):
             raise Exception("Environment name must be one of {0}".format(EnvironmentNames))
-        self.environments[env_name] = EnvManager(env_name, num_of_agents)
+        self.environments[env_name] = EnvManager(env_name)
         print(f"{env_name} environment created.")
+
+
+    def create_agents_in_env(self, env_name, agents, unified_goal, prompt):
+        if env_name not in (env.value for env in EnvironmentNames):
+            raise Exception("Environment name must be one of {0}".format(EnvironmentNames))
+        self.environments[env_name].create_agents(agents, unified_goal, prompt)
 
 
     def define_target_for_environment(self, env_name, target):
@@ -90,16 +98,7 @@ class Simulator:
 
         for agent in env.agents:
             if agent.id == agent_id:
-                variables = {
-                    "name": agent.name,
-                    "goal": f"Reach the target position at {env.target}.",
-                    "actions": action_description,
-                }
-                system_prompt = self.__prompt_map[env_name]
-                system_prompt.set_variables(variables)
-                system_prompt_str = str(system_prompt)
-                system_prompt_str += env.output_instruction_text
-                agent.set_system_prompt(system_prompt_str)
+                agent.set_action_description(action_description)
                 break
 
 
@@ -140,40 +139,45 @@ class Simulator:
         """
         pass
 
+    def __parse_action_description(self, action_description_string):
+        pattern = r"- \*\*(\w+)\*\*: (.+)"
+
+        # Parse the actions
+        actions = [
+            Action(name=match.group(1), description=match.group(2))
+            for match in re.finditer(pattern, action_description_string)
+        ]
+        return actions
+
+    def load_environment_config(self, config_file):
+        with open(config_file, "r") as config_file:
+            config = yaml.safe_load(config_file)
+
+        environments = config["environments"]
+        for env_name in environments:
+            print(env_name)
+            grid_size = environments[env_name]["grid_size"]
+            output_instruction_text = environments[env_name]["output_instruction_text"]
+            actions = self.__parse_action_description(environments[env_name]["actions_description"])
+            unified_goal = environments[env_name]["unified_goal"]
+            agent_names = environments[env_name]["agent_names"]
+            prompt = environments[env_name]["prompt"]
+
+            self.add_environment(env_name)
+            self.create_agents_in_env(env_name, agent_names, unified_goal, prompt)
+            self.set_output_instruction_text_for_env(env_name, output_instruction_text)
+            self.set_action_description_for_agent(env_name, agent_names, actions)
+
+
+
+
+
+
 
 if __name__ == "__main__":
     simulator = Simulator()
-    simulator.add_environment(EnvironmentNames.GRID_WORLD.value)
+    simulator.load_environment_config("env_config.yaml")
     simulator.define_target_for_environment(EnvironmentNames.GRID_WORLD.value, (4, 4))
-
-    output_instruction_text = """
-        You are required to respond in JSON format only.
-
-        Your response must include the following keys:
-        1. **action_name**: The name of the action you intend to perform.
-        2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
-        3. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
-
-        Here is an example of the expected format:
-
-        {
-          "action_name": "up",
-          "action_parameters": {"steps": 1},
-          "rationale": "Moving up to get closer to the target position."
-        }
-
-        Remember, you must always output a JSON response following this structure.
-        """
-    simulator.set_output_instruction_text_for_env(EnvironmentNames.GRID_WORLD.value, output_instruction_text)
-
-    actions_description = """
-       - **north**: Move one step upward on the grid.
-       - **south**: Move one step downward on the grid.
-       - **west**: Move one step to the left on the grid.
-       - **east**: Move one step to the right on the grid.
-       """
-    simulator.set_action_description_for_agent(EnvironmentNames.GRID_WORLD.value, 0, actions_description)
-
     simulator.run_environment(EnvironmentNames.GRID_WORLD.value)
 
 

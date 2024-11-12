@@ -109,6 +109,9 @@ class Agent:
         """
         self.messages.insert(0, {"role": "system", "content": prompt})
 
+    def set_action_space(self, action_space: str):
+        self.action_space = action_space
+
     def step(self):
         """
         Takes an observation, generates a response using the backend,

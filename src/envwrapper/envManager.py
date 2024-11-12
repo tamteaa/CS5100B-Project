@@ -24,7 +24,7 @@ class EnvManager:
         EnvironmentNames.GRID_WORLD.value: PromptLoader().load_prompt("gridworld_system_prompt")
     }
 
-    def __init__(self, env_name, agents, **kwargs):
+    def __init__(self, env_name, **kwargs):
         """
         The constructor of the EnvManager class.
 
@@ -44,14 +44,44 @@ class EnvManager:
 
         self.env_name = env_name
         self.env = self.__env_map[env_name](**kwargs)
-        for i in range(agents):
+
+    def create_agents(self, agents, unified_goal, prompt):
+        """
+        Creates the specified agents.
+
+        :param agents: a list containing the agent names.
+
+        :param unified_goal: The unified goal for the agent(s).
+
+        :return: None
+        """
+        for i in range(len(agents)):
             agent_id = int(i)
-            name = f"Agent_{i}"
+            name = agents[i]
             action_space = []
-            system_prompt = self.__prompt_map[env_name]
-        
-            agent = Agent(agent_id, name, action_space, str(system_prompt))
+            #system_prompt = self.__prompt_map[self.env_name]
+
+            variables = {
+                "name": agents[i],
+                "goal": unified_goal,
+                "agent_names": agents,
+                "n_agents": len(agents)
+                #"gridworld_size": grid_size
+            }
+
+            #agent = Agent(agent_id, name, action_space, str(system_prompt))
+
+            agent = Agent(
+                agent_id=agent_id,
+                name=name,
+                variables=variables,
+                action_space=action_space,
+                start_position=(0,0),
+                color=(0, 0, 0)
+            )
+            agent.set_system_prompt(prompt)
             self.agents.append(agent)
+
 
     def define_target(self, target):
         """
@@ -100,8 +130,10 @@ class EnvManager:
             print("*" * 20 + f" Episode {episode + 1} of {num_episodes} " + "*" * 20)
 
             for agent in self.agents:
+                observation = self.env.get_agent_position(agent.id)
+                agent.observation = f"Your current position is: {observation}"
                 print(f"Agent {agent.id}: {agent.name}, Observation {observation_str}")
-                action = agent.step(observation_str)
+                action = agent.step()
 
                 # Extract the action name from the agent's response
                 action_name = action.get("action_name", "invalid")
