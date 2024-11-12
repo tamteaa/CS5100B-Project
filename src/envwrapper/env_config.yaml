@@ -36,7 +36,7 @@ environments:
       - Alice
 
     agent_starting_positions:
-      [0,0]
+      - [0,0]
 
     prompt: |
       [ Introduction ]

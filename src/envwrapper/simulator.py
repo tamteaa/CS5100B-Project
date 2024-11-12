@@ -36,10 +36,10 @@ class Simulator:
         print(f"{env_name} environment created.")
 
 
-    def create_agents_in_env(self, env_name, agents, unified_goal, prompt):
+    def create_agents_in_env(self, env_name, agents, unified_goal, prompt, agent_starting_positions):
         if env_name not in (env.value for env in EnvironmentNames):
             raise Exception("Environment name must be one of {0}".format(EnvironmentNames))
-        self.environments[env_name].create_agents(agents, unified_goal, prompt)
+        self.environments[env_name].create_agents(agents, unified_goal, prompt, agent_starting_positions)
 
 
     def define_target_for_environment(self, env_name, target):
@@ -136,7 +136,9 @@ class Simulator:
 
         :return             : None
         """
-        pass
+        for env in self.environments.values():
+            env.run(max_episodes)
+
 
     def __parse_action_description(self, action_description_string):
         pattern = r"- \*\*(\w+)\*\*: (.+)"
@@ -160,10 +162,11 @@ class Simulator:
             actions = self.__parse_action_description(environments[env_name]["actions_description"])
             unified_goal = environments[env_name]["unified_goal"]
             agent_names = environments[env_name]["agent_names"]
+            agent_starting_positions = [tuple(pos) for pos in environments[env_name]['agent_starting_positions']]
             prompt = environments[env_name]["prompt"]
 
             self.add_environment(env_name)
-            self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text)
+            self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text, agent_starting_positions)
             self.set_output_instruction_text_for_env(env_name, output_instruction_text)
             self.set_action_description_for_agent(env_name, agent_names, actions)
 
@@ -172,7 +175,8 @@ if __name__ == "__main__":
     simulator = Simulator()
     simulator.load_environment_config("env_config.yaml")
     simulator.define_target_for_environment(EnvironmentNames.GRID_WORLD.value, (4, 4))
-    simulator.run_environment(EnvironmentNames.GRID_WORLD.value)
+    simulator.run_environment(EnvironmentNames.COMPLEX_GRID_WORLD.value)
+    simulator.run_all()
 
 
 

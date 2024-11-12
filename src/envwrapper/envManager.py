@@ -47,7 +47,7 @@ class EnvManager:
         self.env_name = env_name
         self.env = self.__env_map[env_name](**kwargs)
 
-    def create_agents(self, agents, unified_goal, prompt):
+    def create_agents(self, agents, unified_goal, prompt, agent_starting_positions):
         """
         Creates the specified agents.
 
@@ -77,12 +77,16 @@ class EnvManager:
                 agent_id=agent_id,
                 name=name,
                 variables=variables,
-                action_space=action_space,
-                start_position=(0,0),
-                color=(0, 0, 0)
+                action_space=action_space
             )
             agent.set_system_prompt(prompt)
             self.agents.append(agent)
+
+        for agent, position in zip(self.agents, agent_starting_positions):
+            agent.set_start_position(position)
+
+        if self.env_name == EnvironmentNames.COMPLEX_GRID_WORLD.value:
+            self.env.set_agents_for_env(self.agents)
 
 
     def define_target(self, target):
@@ -125,7 +129,7 @@ class EnvManager:
         """
         print("*" * 20 + f" Starting simulation of environment {self.env_name} " + "*" * 20)
         observation = self.env.reset()
-        observation_str = f"Your current position is: {observation[0]}"
+        #observation_str = f"Your current position is: {observation[0]}"
         agent_reached_target = False
         for episode in range(num_episodes):
             time.sleep(1)
@@ -134,7 +138,7 @@ class EnvManager:
             for agent in self.agents:
                 observation = self.env.get_agent_position(agent.id)
                 agent.observation = f"Your current position is: {observation}"
-                print(f"Agent {agent.id}: {agent.name}, Observation {observation_str}")
+                print(f"Agent {agent.id}: {agent.name}, Observation {observation}")
                 action = agent.step()
 
                 # Extract the action name from the agent's response
@@ -147,7 +151,7 @@ class EnvManager:
 
                 # Display the updated grid state
                 print("Updated Grid State:")
-                self.env.render()
+                #self.env.render()
 
                 # Get the agent's current position
                 agents_position = self.env.get_agent_position(agent.id)
