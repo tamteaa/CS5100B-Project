@@ -32,9 +32,9 @@ class Agent:
             agent_id: int,
             name: str,
             action_space: List[Action],
-            start_position: Tuple,
-            color: Tuple,
             variables: Dict,
+            start_position: Tuple = None,
+            color: Tuple = None,
             enforce_json_output: bool = False,
             backend: str = "groq",
             backend_model: str = "llama3-70b-8192",
@@ -113,6 +113,13 @@ class Agent:
         self.action_space = action_space
         actions_description = format_actions(self.action_space)
         self.variables["actions"] = actions_description
+
+
+    def set_start_position(self, position: Tuple):
+        self.position = position
+
+    def set_agent_color(self, color: Tuple):
+        self.color = color
 
     def step(self):
         """
