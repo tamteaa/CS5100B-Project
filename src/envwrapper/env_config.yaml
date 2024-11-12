@@ -1,5 +1,6 @@
 environments:
   grid_world:
+    grid_size: [4,4]
     output_instruction_text: |
       You are required to respond in JSON format only.
 
