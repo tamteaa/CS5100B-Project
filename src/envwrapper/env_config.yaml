@@ -35,6 +35,9 @@ environments:
     agent_names:
       - Alice
 
+    agent_starting_position:
+      [0,0]
+
     prompt: |
       [ Introduction ]
       You are an Agent in a simulated gridworld environment, your mission is to strategically interact with the environment and other agents to achieve your objectives.
@@ -108,6 +111,12 @@ environments:
       - Bob
       - Charlie
       - Diana
+
+    agent_starting_positions:
+      - [2,1]
+      - [4,4]
+      - [5,7]
+      - [0,6]
 
     prompt: |
       [ Introduction ]
