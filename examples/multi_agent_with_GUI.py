@@ -74,10 +74,10 @@ if __name__ == '__main__':
         "4. Keep track of which corners are claimed by others\n"
         "5. Move efficiently toward your chosen corner\n\n"
         "CORNERS: There are four corners in the grid:\n"
-        "- Top-left corner\n"
-        "- Top-right corner\n"
-        "- Bottom-left corner\n"
-        "- Bottom-right corner\n\n"
+        "- Top-left corner = (5, 0)\n"
+        "- Top-right corner = (5, 5)\n"
+        "- Bottom-left corner = (0, 5) \n"
+        "- Bottom-right corner = (0, 0)\n\n"
         "SUCCESS CRITERIA:\n"
         "- Each agent must occupy a unique corner position\n"
         "- The simulation continues running until ALL agents are in their final corners\n"
@@ -91,7 +91,6 @@ if __name__ == '__main__':
     # Initialize grid size and define corners
     grid_size = (6, 6)
     corners = [(0, 0), (0, grid_size[1] - 1), (grid_size[0] - 1, 0), (grid_size[0] - 1, grid_size[1] - 1)]
-
 
     # Function to generate unique random start positions
     def generate_unique_positions(num_agents, grid_size):

@@ -25,6 +25,7 @@ class DatabaseManager:
         """
         self.tables['episodes'] = Table(
             self.connection,
+            'episodes',
             {
                 'episode_id': 'INTEGER',
                 'agent_id': 'INTEGER',

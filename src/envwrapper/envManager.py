@@ -160,10 +160,10 @@ class EnvManager:
                 print(f"Agent {agent.id} Current Position: {agents_position}")
 
                 if db_manager is not None:
-                    db_manager['episodes'].insert_row({
-                        "episode_id":   episode,
-                        "agent_id": agent.id,
-                        "history": [{"action": action, "result": observation_str}]}
+                    db_manager['episodes'].insert(
+                        episode_id = episode,
+                        agent_id= agent.id,
+                        history=[{"action": action, "result": observation_str}]
                     )
 
                 # Check if the agent has reached the target position
