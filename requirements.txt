@@ -2,3 +2,5 @@ groq~=0.11.0
 python_dotenv~=1.0.1
 numpy~=2.0.2
 dearpygui~=2.0.0
+pyyaml~=6.0.1
+pandas~=2.2.3
