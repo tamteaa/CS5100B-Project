@@ -93,8 +93,8 @@ class ComplexGridworld:
         if not agent:
             return f"Agent ID {agent_id} not found in the environment."
 
-        if action not in ['north', 'south', 'east', 'west']:
-            return f"Invalid action: '{action}'. Valid actions are ['north', 'south', 'east', 'west']."
+        if action not in ['north', 'south', 'east', 'west', 'pick', 'drop', 'skip']:
+            return f"Invalid action: '{action}'. Valid actions are ['north', 'south', 'east', 'west', 'pick', 'drop', 'skip']."
 
         row, col = agent.position
         new_row, new_col = row, col
@@ -107,6 +107,13 @@ class ComplexGridworld:
             new_col = min(self.grid_size[1] - 1, col + 1)
         elif action == 'west':
             new_col = max(0, col - 1)
+        elif action == 'pick':
+            if self.grid[row][col].has_items():
+                return "You pick up the item"
+            else:
+                return "No item here"
+        elif action == 'drop':
+            return "You drop off the item"
 
         if action == "skip":
             return "You skipped your turn."
@@ -118,7 +125,6 @@ class ComplexGridworld:
         target_square = self.grid[new_row][new_col]
         if target_square.obstacle:
             return "Cannot move into obstacle."
-
         # Update grid and agent's position
         self.grid[row][col].agent = None
         agent.position = (new_row, new_col)
