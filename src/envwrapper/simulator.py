@@ -28,7 +28,7 @@ class Simulator:
         """
         self.environments = {}
         self.use_db = use_db
-        self.use_gui = use_gui
+        self.use_gui = use_gui      # Not functional.
         self.db_manager = DatabaseManager() if use_db else None
 
     def add_environment(self, env_name):
