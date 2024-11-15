@@ -1,6 +1,6 @@
 environments:
   complex_grid_world:
-    grid_size: [ 6, 6 ]
+    grid_size: [ 6, 6 ]         # If no value is specified, default grid size of (5,5) is used.
     output_instruction_text: |
       You are required to respond in JSON format only.
       

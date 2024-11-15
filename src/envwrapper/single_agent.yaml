@@ -1,6 +1,6 @@
 environments:
   grid_world:
-    grid_size: [4,4]
+    grid_size: [4, 4]    # If no value is specified, default grid size of (5,5) is used.
     output_instruction_text: |
       You are required to respond in JSON format only.
 

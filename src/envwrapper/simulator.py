@@ -203,7 +203,7 @@ class Simulator:
             environments = config["environments"]
             for env_name in environments:
                 print(env_name)
-                grid_size = environments[env_name]["grid_size"]
+                grid_size = environments[env_name].get("grid_size", (5,5))
                 output_instruction_text = environments[env_name]["output_instruction_text"]
                 actions = self.__parse_action_description(environments[env_name]["actions_description"])
                 unified_goal = environments[env_name]["unified_goal"]
@@ -224,5 +224,4 @@ if __name__ == "__main__":
         "multi_agent.yaml"
     ])
     simulator.define_target_for_environment(EnvironmentNames.GRID_WORLD.value, (4, 4))
-    #simulator.run_environment(EnvironmentNames.COMPLEX_GRID_WORLD.value)
     simulator.run_all(num_simulations=3)
