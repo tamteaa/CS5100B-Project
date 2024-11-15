@@ -31,17 +31,19 @@ class Simulator:
         self.use_gui = use_gui      # Not functional.
         self.db_manager = DatabaseManager() if use_db else None
 
-    def add_environment(self, env_name):
+    def add_environment(self, env_name, grid_size = (5, 5)):
         """
         Adds a new environment to the simulator.
 
         :param env_name         : Environment name. Must be one specified in :class:`EnvironmentNames`.
 
+        :param grid_size        : Grid size for the environement.
+
         :return                 : None
         """
         if env_name not in (env.value for env in EnvironmentNames):
             raise Exception("Environment name must be one of {0}".format(EnvironmentNames))
-        self.environments[env_name] = EnvManager(env_name)
+        self.environments[env_name] = EnvManager(env_name, grid_size=grid_size)
         print(f"{env_name} environment created.")
 
 
@@ -203,7 +205,7 @@ class Simulator:
             environments = config["environments"]
             for env_name in environments:
                 print(env_name)
-                grid_size = environments[env_name].get("grid_size", (5,5))
+                grid_size = tuple(environments[env_name].get("grid_size", (5, 5)))
                 output_instruction_text = environments[env_name]["output_instruction_text"]
                 actions = self.__parse_action_description(environments[env_name]["actions_description"])
                 unified_goal = environments[env_name]["unified_goal"]
@@ -211,11 +213,10 @@ class Simulator:
                 agent_starting_positions = [tuple(pos) for pos in environments[env_name]['agent_starting_positions']]
                 prompt = environments[env_name]["prompt"]
 
-                self.add_environment(env_name)
+                self.add_environment(env_name, grid_size)
                 self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text, agent_starting_positions)
                 self.set_output_instruction_text_for_env(env_name, output_instruction_text)
                 self.set_action_description_for_agent(env_name, agent_names, actions)
-
 
 if __name__ == "__main__":
     simulator = Simulator(use_db=True, use_gui=False)

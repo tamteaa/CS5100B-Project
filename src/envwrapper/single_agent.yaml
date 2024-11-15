@@ -25,12 +25,13 @@ environments:
       - **west**: Move one step to the left on the grid.
       - **east**: Move one step to the right on the grid.
 
+    # Specify target clearly here.
     unified_goal: |
       PRIMARY GOAL: Reach the north-east corner in the grid. This is at position (4,4).
       
       Use your observations to determine the exact corner coordinates.
       
-      When you reach (4, 4) you have achieved your goal.
+      When you reach (4, 4) you have achieved your goal.  
 
     agent_names:
       - Alice
