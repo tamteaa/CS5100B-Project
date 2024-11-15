@@ -18,28 +18,52 @@ class Simulator:
         EnvironmentNames.GRID_WORLD.value: PromptLoader().load_prompt("gridworld_system_prompt")
     }
 
-    def __init__(self):
+    def __init__(self, use_db, use_gui):
         """
         Initializes an empty dictionary to keep track of each environment.
+
+        :param use_db: Boolean to use database
+
+        :param use_gui: Boolean to use GUI
         """
         self.environments = {}
-        self.db_manager = DatabaseManager()
+        self.use_db = use_db
+        self.use_gui = use_gui      # Not functional.
+        self.db_manager = DatabaseManager() if use_db else None
 
-    def add_environment(self, env_name):
+    def add_environment(self, env_name, grid_size = (5, 5)):
         """
         Adds a new environment to the simulator.
 
         :param env_name         : Environment name. Must be one specified in :class:`EnvironmentNames`.
 
+        :param grid_size        : Grid size for the environement.
+
         :return                 : None
         """
         if env_name not in (env.value for env in EnvironmentNames):
             raise Exception("Environment name must be one of {0}".format(EnvironmentNames))
-        self.environments[env_name] = EnvManager(env_name)
+        self.environments[env_name] = EnvManager(env_name, grid_size=grid_size)
         print(f"{env_name} environment created.")
 
 
     def create_agents_in_env(self, env_name, agents, unified_goal, prompt, agent_starting_positions):
+        """
+        Spawns the agents in the specified environment.
+
+        :param env_name: Name of the environment.
+
+        :param agents: a list of agent names.
+
+        :param unified_goal: The unified goal for the agents.
+
+        :param prompt: A system prompt for the agents.
+
+        :param agent_starting_positions: a list of tuples each containing the starting positions of the agents. Since we work with grid-world,
+                                         we use (x, y) co-ordinates.
+
+        :return: None
+        """
         if env_name not in (env.value for env in EnvironmentNames):
             raise Exception("Environment name must be one of {0}".format(EnvironmentNames))
         self.environments[env_name].create_agents(agents, unified_goal, prompt, agent_starting_positions)
@@ -77,11 +101,11 @@ class Simulator:
         """
         Sets the output instruction text for an environment.
 
-        :param env_name                 :
+        :param env_name                 : Name of the environment.
 
-        :param output_instruction_text  :
+        :param output_instruction_text  : Output instruction text for the environment.
 
-        :return                         :
+        :return                         : None
         """
         self.environments[env_name].set_output_instruction_text(output_instruction_text)
 
@@ -114,11 +138,13 @@ class Simulator:
         """
         del self.environments[env_name]
 
-    def run_environment(self, env_name, max_episodes = 20):
+    def run_environment(self, env_name, num_simulations=1, max_episodes = 20):
         """
         Runs a specified environment.
 
         :param env_name     : Runs the specified environment for the number of episodes specified.
+
+        :param num_simulations : Number of simulations to run for the specified environment.
 
         :param max_episodes : Maximum number of episodes to run. By default, it is 20.
 
@@ -126,24 +152,35 @@ class Simulator:
         """
         if env_name not in (env.value for env in EnvironmentNames):
             raise Exception("Environment name must be one of {0}".format(EnvironmentNames))
-        self.environments[env_name].run(max_episodes)
+        for sim in range(num_simulations):
+            self.environments[env_name].run(max_episodes)
 
 
-    def run_all(self, max_episodes=20, parallel_run = False):
+    def run_all(self, num_simulations=1, max_episodes=20, parallel_run = False):
         """
         Runs all environments in the simulator.
 
         :param max_episodes : Maximum number of episodes for each environment to run. By default, it is 20.
+
+        :param num_simulations : Number of simulations to run for each environment.
 
         :param parallel_run : Flag to enable parallel run of the environments.
 
         :return             : None
         """
         for env in self.environments.values():
-            env.run(max_episodes, self.db_manager)
+            for sim in range(num_simulations):
+                env.run(max_episodes, self.db_manager)
 
 
     def __parse_action_description(self, action_description_string):
+        """
+        This function takes an action description string and converts them into a list of Action objects.
+
+        :param action_description_string: The action description string.
+
+        :return: a list of Action objects.
+        """
         pattern = r"- \*\*(\w+)\*\*: (.+)"
 
         # Parse the actions
@@ -153,42 +190,39 @@ class Simulator:
         ]
         return actions
 
-    def load_environment_config(self, config_file):
-        with open(config_file, "r") as config_file:
-            config = yaml.safe_load(config_file)
+    def load_environment_configs(self, config_files):
+        """
+        Given a list of config files, loads them into the simulator.
 
-        environments = config["environments"]
-        for env_name in environments:
-            print(env_name)
-            grid_size = environments[env_name]["grid_size"]
-            output_instruction_text = environments[env_name]["output_instruction_text"]
-            actions = self.__parse_action_description(environments[env_name]["actions_description"])
-            unified_goal = environments[env_name]["unified_goal"]
-            agent_names = environments[env_name]["agent_names"]
-            agent_starting_positions = [tuple(pos) for pos in environments[env_name]['agent_starting_positions']]
-            prompt = environments[env_name]["prompt"]
+        :param config_files: A list of config files.
 
-            self.add_environment(env_name)
-            self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text, agent_starting_positions)
-            self.set_output_instruction_text_for_env(env_name, output_instruction_text)
-            self.set_action_description_for_agent(env_name, agent_names, actions)
+        :return: None
+        """
+        for config_file in config_files:
+            with open(config_file, "r") as file:
+                config = yaml.safe_load(file)
 
+            environments = config["environments"]
+            for env_name in environments:
+                print(env_name)
+                grid_size = tuple(environments[env_name].get("grid_size", (5, 5)))
+                output_instruction_text = environments[env_name]["output_instruction_text"]
+                actions = self.__parse_action_description(environments[env_name]["actions_description"])
+                unified_goal = environments[env_name]["unified_goal"]
+                agent_names = environments[env_name]["agent_names"]
+                agent_starting_positions = [tuple(pos) for pos in environments[env_name]['agent_starting_positions']]
+                prompt = environments[env_name]["prompt"]
+
+                self.add_environment(env_name, grid_size)
+                self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text, agent_starting_positions)
+                self.set_output_instruction_text_for_env(env_name, output_instruction_text)
+                self.set_action_description_for_agent(env_name, agent_names, actions)
 
 if __name__ == "__main__":
-    simulator = Simulator()
-    simulator.load_environment_config("env_config.yaml")
+    simulator = Simulator(use_db=True, use_gui=False)
+    simulator.load_environment_configs([
+        "single_agent.yaml",
+        "multi_agent.yaml"
+    ])
     simulator.define_target_for_environment(EnvironmentNames.GRID_WORLD.value, (4, 4))
-    #simulator.run_environment(EnvironmentNames.COMPLEX_GRID_WORLD.value)
-    simulator.run_all()
-
-
-
-    """
-    Write a config file for env. Put all things needed by env in the file. Have simulator load it and initialize env.
-    Connect simulator with DB. (Priority)
-    Logging.
-    
-    Complex grid world.
-    Debug multi-env.
-    Messaging layer.
-    """
+    simulator.run_all(num_simulations=3)
