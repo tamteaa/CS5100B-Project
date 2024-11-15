@@ -60,6 +60,11 @@ class ComplexGridworld:
             for (row, col), item_list in items.items():
                 self.grid[row][col].items.extend(item_list)
 
+        self.max_episodes = 0
+        self.variables = {}
+
+        self.score = 0
+
     def __getitem__(self, key):
         """Support both single index and tuple index access."""
         if isinstance(key, tuple):
@@ -120,7 +125,7 @@ class ComplexGridworld:
 
         # Check if the new position is different from the current position
         if (new_row, new_col) == (row, col):
-            return f"Agent {agent_id} tried to move '{action}', but it cannot move further in that direction."
+            return f"Agent {agent.name} tried to move '{action}', but it cannot move further in that direction."
 
         target_square = self.grid[new_row][new_col]
         if target_square.obstacle:
@@ -130,12 +135,15 @@ class ComplexGridworld:
         agent.position = (new_row, new_col)
         self.grid[new_row][new_col].agent = agent
 
+        if len(self.termination_callbacks) == 0:
+            raise ValueError("must have at least one termination callback")
+
         # Check termination conditions
         if all(callback(self) for callback in self.termination_callbacks):
             self.terminated = True
             return "The environment has reached a termination condition."
 
-        return f"Agent {agent_id} moved '{action}' from {(row, col)} to {(new_row, new_col)}."
+        return f"Agent  {agent.name} moved '{action}' from {(row, col)} to {(new_row, new_col)}."
 
     def get_agent_position(self, agent_id: int):
         """Get the position of a specific agent."""

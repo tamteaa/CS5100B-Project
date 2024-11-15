@@ -15,6 +15,7 @@ from src.envwrapper.env_names import EnvironmentNames
 # Loading the env file.
 load_dotenv()
 
+
 class EnvManager:
 
     __env_map = {
@@ -46,6 +47,9 @@ class EnvManager:
 
         self.env_name = env_name
         self.env = self.__env_map[env_name](**kwargs)
+
+        self.num_episodes: int = None
+        self.db_manager = None
 
     def create_agents(self, agents, unified_goal, prompt, agent_starting_positions):
         """
@@ -88,7 +92,6 @@ class EnvManager:
         if self.env_name == EnvironmentNames.COMPLEX_GRID_WORLD.value:
             self.env.set_agents_for_env(self.agents)
 
-
     def define_target(self, target):
         """
         Sets the specified target for this environment.
@@ -119,7 +122,7 @@ class EnvManager:
         """
         self.output_instruction_text = output_instruction_text
 
-    def run(self, num_episodes, db_manager=None):
+    def run(self, env: ComplexGridworld):
         """
         Runs the specified number of episodes.
 
@@ -130,15 +133,15 @@ class EnvManager:
         :return             :   None
         """
         print("*" * 20 + f" Starting simulation of environment {self.env_name} " + "*" * 20)
-        observation = self.env.reset()
+        observation = env.reset()
         #observation_str = f"Your current position is: {observation[0]}"
         agent_reached_target = False
-        for episode in range(num_episodes):
+        for episode in range(self.num_episodes):
             time.sleep(1)
-            print("*" * 20 + f" Episode {episode + 1} of {num_episodes} " + "*" * 20)
+            print("*" * 20 + f" Episode {episode + 1} of {self.num_episodes} " + "*" * 20)
 
             for agent in self.agents:
-                observation = self.env.get_agent_position(agent.id)
+                observation = env.get_agent_position(agent.id)
                 agent.observation = f"Your current position is: {observation}"
                 print(f"Agent {agent.id}: {agent.name}, Observation {observation}")
                 action = agent.step()
@@ -149,18 +152,18 @@ class EnvManager:
                 print(f"Rationale: {action.get('rationale', 'No rationale provided.')}")
 
                 # Execute the action in the environment
-                observation_str = self.env.step(agent.id, action_name)
+                observation_str = env.step(agent.id, action_name)
 
                 # Display the updated grid state
                 print("Updated Grid State:")
-                #self.env.render()
+
 
                 # Get the agent's current position
-                agents_position = self.env.get_agent_position(agent.id)
+                agents_position = env.get_agent_position(agent.id)
                 print(f"Agent {agent.id} Current Position: {agents_position}")
 
-                if db_manager is not None:
-                    db_manager['episodes'].insert(
+                if self.db_manager is not None:
+                    self.db_manager['episodes'].insert(
                         episode_id = episode,
                         agent_id= agent.id,
                         history=[{"action": action, "result": observation_str}]

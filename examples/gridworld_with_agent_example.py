@@ -29,7 +29,7 @@ if __name__ == '__main__':
     You are required to respond in JSON format only.
 
     Your response must include the following keys:
-    1. **action_name**: The name of the action you intend to perform.
+    1. **action_name**: The name of the action you intend to perform.\
     2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
     3. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
 

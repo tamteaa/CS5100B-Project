@@ -32,6 +32,9 @@ class GridWorldView:
     def draw_item_square(self, parent, top_left, bottom_right, color, thickness=1):
         dpg.draw_rectangle(top_left, bottom_right, color=(0, 0, 0), fill=color, parent=parent)
 
+    def draw_text(self, parent, position, text, color=(0, 0, 0), size=20):
+        dpg.draw_text(position, text=text, color=color, size=size, parent=parent)
+
     def draw_gridworld(self, gridworld: ComplexGridworld, tag: str):
         # Clear existing drawings
         dpg.delete_item(tag, children_only=True)
@@ -77,9 +80,19 @@ class GridWorldView:
                 fill_color = (100, 100, 100) if square.obstacle else (255, 255, 255)
                 self.draw_square(tag, top_left, bottom_right, fill_color)
 
-                # Draw agent or items
                 if square.agent is not None:
+                    # Draw the agent's square
                     self.draw_square(tag, top_left, bottom_right, (255, 0, 0))
+
+                    # Calculate the center position for the agent's name text
+                    text_size = int(self.cell_size * 0.3)  # Scale text size based on cell size
+                    text_width = len(square.agent.name) * text_size * 0.6  # Approximate text width
+                    text_x = (top_left[0] + bottom_right[0]) // 2 - text_width // 2
+                    text_y = (top_left[1] + bottom_right[1]) // 2 - text_size // 2
+                    text_position = (text_x, text_y)
+
+                    # Draw the agent's name, centered and scaled
+                    self.draw_text(tag, text_position, square.agent.name, color=(0, 0, 0), size=text_size)
                 elif square.has_items():
                     item = square.items[0]
                     item_center = (

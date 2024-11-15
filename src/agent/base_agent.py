@@ -60,8 +60,7 @@ class Agent:
             raise KeyError("Must use groq as backend")
 
         self.backend = self.backend_map[backend](model_id=self.backend_model)
-        prompts = PromptLoader()
-        self.user_prompt = prompts.load_prompt("gridworld_user_prompt")
+        self.user_prompt = None
 
     def create_system_prompt(self, prompt_name: str):
         prompts = PromptLoader()
@@ -108,6 +107,12 @@ class Agent:
         Sets a system prompt at the beginning of the conversation.
         """
         self.messages.insert(0, {"role": "system", "content": prompt})
+
+    def set_user_prompt(self, prompt):
+        """
+        Sets a system prompt at the beginning of the conversation.
+        """
+        self.user_prompt = prompt
 
     def set_action_space(self, action_space: [Action]):
         self.action_space = action_space

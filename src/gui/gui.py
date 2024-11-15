@@ -101,3 +101,4 @@ class GUI:
 
         # Close the GUI
         self.close()
+

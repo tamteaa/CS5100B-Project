@@ -13,8 +13,6 @@ class GroqBackend(Backend):
         self.model = model_id
         self.temperature = 0.7
 
-        print(self.model)
-
     def generate(self, messages):
         chat_completion = self.client.chat.completions.create(
             messages=messages,
