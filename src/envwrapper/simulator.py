@@ -40,6 +40,22 @@ class Simulator:
 
 
     def create_agents_in_env(self, env_name, agents, unified_goal, prompt, agent_starting_positions):
+        """
+        Spawns the agents in the specified environment.
+
+        :param env_name: Name of the environment.
+
+        :param agents: a list of agent names.
+
+        :param unified_goal: The unified goal for the agents.
+
+        :param prompt: A system prompt for the agents.
+
+        :param agent_starting_positions: a list of tuples each containing the starting positions of the agents. Since we work with grid-world,
+                                         we use (x, y) co-ordinates.
+
+        :return: None
+        """
         if env_name not in (env.value for env in EnvironmentNames):
             raise Exception("Environment name must be one of {0}".format(EnvironmentNames))
         self.environments[env_name].create_agents(agents, unified_goal, prompt, agent_starting_positions)
@@ -77,11 +93,11 @@ class Simulator:
         """
         Sets the output instruction text for an environment.
 
-        :param env_name                 :
+        :param env_name                 : Name of the environment.
 
-        :param output_instruction_text  :
+        :param output_instruction_text  : Output instruction text for the environment.
 
-        :return                         :
+        :return                         : None
         """
         self.environments[env_name].set_output_instruction_text(output_instruction_text)
 
@@ -144,6 +160,13 @@ class Simulator:
 
 
     def __parse_action_description(self, action_description_string):
+        """
+        This function takes an action description string and converts them into a list of Action objects.
+
+        :param action_description_string: The action description string.
+
+        :return: a list of Action objects.
+        """
         pattern = r"- \*\*(\w+)\*\*: (.+)"
 
         # Parse the actions
@@ -154,6 +177,13 @@ class Simulator:
         return actions
 
     def load_environment_configs(self, config_files):
+        """
+        Given a list of config files, loads them into the simulator.
+
+        :param config_files: A list of config files.
+
+        :return: None
+        """
         for config_file in config_files:
             with open(config_file, "r") as file:
                 config = yaml.safe_load(file)
