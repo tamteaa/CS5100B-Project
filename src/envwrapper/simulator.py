@@ -153,42 +153,34 @@ class Simulator:
         ]
         return actions
 
-    def load_environment_config(self, config_file):
-        with open(config_file, "r") as config_file:
-            config = yaml.safe_load(config_file)
+    def load_environment_configs(self, config_files):
+        for config_file in config_files:
+            with open(config_file, "r") as file:
+                config = yaml.safe_load(file)
 
-        environments = config["environments"]
-        for env_name in environments:
-            print(env_name)
-            grid_size = environments[env_name]["grid_size"]
-            output_instruction_text = environments[env_name]["output_instruction_text"]
-            actions = self.__parse_action_description(environments[env_name]["actions_description"])
-            unified_goal = environments[env_name]["unified_goal"]
-            agent_names = environments[env_name]["agent_names"]
-            agent_starting_positions = [tuple(pos) for pos in environments[env_name]['agent_starting_positions']]
-            prompt = environments[env_name]["prompt"]
+            environments = config["environments"]
+            for env_name in environments:
+                print(env_name)
+                grid_size = environments[env_name]["grid_size"]
+                output_instruction_text = environments[env_name]["output_instruction_text"]
+                actions = self.__parse_action_description(environments[env_name]["actions_description"])
+                unified_goal = environments[env_name]["unified_goal"]
+                agent_names = environments[env_name]["agent_names"]
+                agent_starting_positions = [tuple(pos) for pos in environments[env_name]['agent_starting_positions']]
+                prompt = environments[env_name]["prompt"]
 
-            self.add_environment(env_name)
-            self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text, agent_starting_positions)
-            self.set_output_instruction_text_for_env(env_name, output_instruction_text)
-            self.set_action_description_for_agent(env_name, agent_names, actions)
+                self.add_environment(env_name)
+                self.create_agents_in_env(env_name, agent_names, unified_goal, prompt+output_instruction_text, agent_starting_positions)
+                self.set_output_instruction_text_for_env(env_name, output_instruction_text)
+                self.set_action_description_for_agent(env_name, agent_names, actions)
 
 
 if __name__ == "__main__":
     simulator = Simulator()
-    simulator.load_environment_config("env_config.yaml")
+    simulator.load_environment_configs([
+        "single_agent.yaml",
+        "multi_agent.yaml"
+    ])
     simulator.define_target_for_environment(EnvironmentNames.GRID_WORLD.value, (4, 4))
     #simulator.run_environment(EnvironmentNames.COMPLEX_GRID_WORLD.value)
     simulator.run_all()
-
-
-
-    """
-    Write a config file for env. Put all things needed by env in the file. Have simulator load it and initialize env.
-    Connect simulator with DB. (Priority)
-    Logging.
-    
-    Complex grid world.
-    Debug multi-env.
-    Messaging layer.
-    """
