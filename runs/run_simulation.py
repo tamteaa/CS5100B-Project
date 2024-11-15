@@ -17,6 +17,7 @@ def is_agent_in_position(env):
     return True
 
 
+
 def all_agents_in_corners(env):
     # Define the four unique corner positions based on the grid size
     corners = {
