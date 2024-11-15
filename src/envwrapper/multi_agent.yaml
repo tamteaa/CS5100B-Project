@@ -1,0 +1,79 @@
+environments:
+  complex_grid_world:
+    grid_size: [ 6, 6 ]
+    output_instruction_text: |
+      You are required to respond in JSON format only.
+      
+      Your response must include the following keys:
+      1. **action_name**: The name of the action you intend to perform.
+      2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
+      3. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
+      
+      Here is an example of the expected format:
+      
+      {
+        "action_name": "up",
+        "action_parameters": {"steps": 1},
+        "rationale": "Moving up to get closer to the target position."
+      }
+      
+      Remember, you must always output a JSON response following this structure.
+
+    actions_description: |
+      - **north**: Move one step upward on the grid. Increases the y-coordinate by 1.
+      - **south**: Move one step downward on the grid. Decreases the y-coordinate by 1.
+      - **west**: Move one step to the left on the grid. Decreases the x-coordinate by 1. 
+      - **east**: Move one step to the right on the grid. Increases the x-coordinate by 1.
+      - **skip**: Do nothing and skip this step.
+
+    unified_goal: |
+      "PRIMARY GOAL: Coordinate with other agents to ensure each agent occupies a different corner of the gridworld.\n\n"
+        "SPECIFIC INSTRUCTIONS:\n"
+        "1. Choose an unclaimed corner to move toward\n"
+        "2. Communicate your intended corner to other agents\n"
+        "3. If multiple agents choose the same corner, negotiate and reassign\n"
+        "4. Keep track of which corners are claimed by others\n"
+        "5. Move efficiently toward your chosen corner\n\n"
+        "CORNERS: There are four corners in the grid:\n"
+        "- Top-left corner\n"
+        "- Top-right corner\n"
+        "- Bottom-left corner\n"
+        "- Bottom-right corner\n\n"
+        "SUCCESS CRITERIA:\n"
+        "- Each agent must occupy a unique corner position\n"
+        "- The simulation continues running until ALL agents are in their final corners\n"
+        "- If you can still observe the environment, the task is NOT complete - keep coordinating!\n"
+        "Use your observations to determine the exact corner coordinates."
+
+    agent_names:
+      - Alice
+      - Bob
+      - Charlie
+      - Diana
+
+    agent_starting_positions:
+      - [ 2,1 ]
+      - [ 4,4 ]
+      - [ 5,7 ]
+      - [ 0,6 ]
+
+    prompt: |
+      [ Introduction ]
+      You are an Agent in a simulated gridworld environment, your mission is to strategically interact with the environment and other agents to achieve your objectives.
+      
+      The (0, 0) position in the gridworld is at the south-west corner, while the north-east corner is at (y grid size, x grid size).
+      
+      [Agent Information]
+      **Name**: <<name>>
+      
+      **Goal** : <<goal>>
+      
+      [ Environment Information ]
+      - **General** :
+          - Gridworld size: <<gridworld_size>>
+          - Total Agents (including you): <<n_agents>>
+          - Names of agents in simulation: <<agent_names>>
+      
+      [ Action Space ]
+      - **Actions** :
+      <<actions>>
