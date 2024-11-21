@@ -2,28 +2,11 @@ from typing import List, Dict, Tuple
 from src.agent.backend.groq_backend import GroqBackend
 from src.utils.output_parsing import extract_json_from_string
 from src.agent.actions import format_actions, Action
-from src.agent.prompts import PromptLoader
-
-output_instruction_text = """
-Use JSON mode. You are required to respond in JSON format only.
-
-Your response must include the following keys:
-1. **action_name**: The name of the action you intend to perform.
-2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
-3. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
-4. **message**: An optional message to send to other agents. If there is no message to send, use an empty string.
-
-Here is an example of the expected format:
-
-{
-  "action_name": "",
-  "action_parameters": {},
-  "rationale": "",
-  "message": ""
-}
-
-Remember, you must always output a JSON response following this structure.
-"""
+from src.agent.backend.cohere_backend import CohereBackend
+from src.agent.backend.togetherai_backend import TogetherBackend
+from src.agent.backend.openai_backend import OpenAIBackend
+from src.agent.backend import Provider
+from src.agent.backend.local_backend import LocalBackend
 
 
 class Agent:
@@ -36,7 +19,7 @@ class Agent:
             start_position: Tuple = None,
             color: Tuple = None,
             enforce_json_output: bool = False,
-            backend: str = "groq",
+            backend_provider: Provider = Provider.GROQ,
             backend_model: str = "llama3-70b-8192",
             debug: bool = False,
     ):
@@ -54,34 +37,37 @@ class Agent:
         self.inbox = []
 
         self.observation = ""
-        self.backend_model = backend_model
-        self.backend_map = {"groq": GroqBackend}
-        if backend != "groq":
-            raise KeyError("Must use groq as backend")
 
-        self.backend = self.backend_map[backend](model_id=self.backend_model)
+        valid_backends = [
+            Provider.GROQ,
+            Provider.TOGETHER,
+            Provider.LOCAL,
+
+        ]
+
+        if backend_provider not in valid_backends:
+            raise KeyError(f"Must use one of {valid_backends} as backend")
+        try:
+            self.backend_model = backend_model.value
+        except:
+            self.backend_model = backend_model
+
+        self.backend_map = {
+            "GROQ": GroqBackend,
+            "cohere": CohereBackend,
+            "TOGETHER": TogetherBackend,
+            "openai": OpenAIBackend,
+            "LOCAL": LocalBackend
+        }
+
+        self.backend = self.backend_map[backend_provider.name](model_id=self.backend_model)
+
         self.user_prompt = None
 
     def create_system_prompt(self, prompt_name: str):
-        prompts = PromptLoader()
+        raise ValueError("Use a Yaml, this method is outdated")
 
-        system_prompt = prompts.load_prompt(prompt_name)
-
-        # Printing the formatted actions using the new function
-        actions_description = format_actions(self.action_space)
-
-        self.variables["actions"] = actions_description
-
-        system_prompt.set_variables(self.variables)
-
-        system_prompt_str = str(system_prompt)
-        system_prompt_str += output_instruction_text
-
-        self.set_system_prompt(system_prompt_str)
-
-    def add_inbox_message(self, name_from: str, msg: str):
-        message = f"From: {name_from}\nMessage: {msg}\n"
-
+    def add_inbox_message(self, message: str):
         self.inbox.append(message)
 
     def add_user_message(self, message: str):
@@ -119,7 +105,6 @@ class Agent:
         actions_description = format_actions(self.action_space)
         self.variables["actions"] = actions_description
 
-
     def set_start_position(self, position: Tuple):
         self.position = position
 
@@ -143,12 +128,13 @@ class Agent:
             self.variables["inbox"] = formatted_messages
         else:
             self.variables["inbox"] = "============\nInbox: Empty\n============"
+
         self.inbox.clear()
 
         self.user_prompt.set_variables(self.variables)
 
         # Add user observation to messages
-        self.add_user_message(str(self.user_prompt) + " This is the list of valid actions: " + self.variables["actions"] )
+        self.add_user_message(str(self.user_prompt))
 
         # Generate response from backend
         response = self.backend.generate(self.messages)
@@ -160,6 +146,10 @@ class Agent:
 
         # Extract the action name from the agent's response
         action_name = action_dict.get("action_name", "invalid")
+
+        new_memory = action_dict.get("add_memory", None)
+        if new_memory:
+            self.variables["memory"] += f"\n {new_memory}\n"
 
         if self.debug:
             print(f"Agent {self.id} Action: {action_name}")

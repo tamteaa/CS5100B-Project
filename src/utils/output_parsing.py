@@ -40,6 +40,6 @@ def extract_json_from_string(s: str) -> Dict[str, Any]:
 
     # If we couldn't extract any key-value pairs, raise ValueError
     if not result:
-        raise ValueError(f"Unable to parse string as dictionary: {s}")
+        return {}
 
     return result

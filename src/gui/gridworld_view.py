@@ -4,8 +4,8 @@ from src.environments.custom_environments.complex_gridworld_environment import C
 
 class GridWorldView:
     def __init__(self):
-        self.cell_size = 30
-        self.padding = 30  # Increased padding for better visibility
+        self.cell_size = 40
+        self.padding = 10
 
     def calculate_cell_size(self, canvas_width, canvas_height, grid_size):
         """Calculate the optimal cell size based on canvas dimensions and grid size."""
@@ -58,63 +58,51 @@ class GridWorldView:
         offset_x = (canvas_width - grid_width) // 2
         offset_y = (canvas_height - grid_height) // 2
 
-        # Draw grid
         for row in range(gridworld.grid_size[0]):
             for col in range(gridworld.grid_size[1]):
-                # Flip the row coordinate for north-south orientation
-                flipped_row = gridworld.grid_size[0] - 1 - row
-
-                # Calculate cell position with offset
-                top_left = (
-                    offset_x + col * self.cell_size,
-                    offset_y + flipped_row * self.cell_size
-                )
-                bottom_right = (
-                    offset_x + (col + 1) * self.cell_size,
-                    offset_y + (flipped_row + 1) * self.cell_size
-                )
-
                 square = gridworld[row][col]
 
-                # Draw base square
+                flipped_row = gridworld.grid_size[0] - 1 - row
+                top_left = (offset_x + col * self.cell_size, offset_y + flipped_row * self.cell_size)
+                bottom_right = (offset_x + (col + 1) * self.cell_size, offset_y + (flipped_row + 1) * self.cell_size)
+
                 fill_color = (100, 100, 100) if square.obstacle else (255, 255, 255)
                 self.draw_square(tag, top_left, bottom_right, fill_color)
 
-                if square.agent is not None:
-                    # Draw the agent's square
-                    self.draw_square(tag, top_left, bottom_right, (255, 0, 0))
+                if square.agents:
+                    self.draw_square(tag, top_left, bottom_right, (255, 200, 200))
 
-                    # Calculate the center position for the agent's name text
-                    text_size = int(self.cell_size * 0.3)  # Scale text size based on cell size
-                    text_width = len(square.agent.name) * text_size * 0.6  # Approximate text width
-                    text_x = (top_left[0] + bottom_right[0]) // 2 - text_width // 2
-                    text_y = (top_left[1] + bottom_right[1]) // 2 - text_size // 2
-                    text_position = (text_x, text_y)
+                    # Draw all agent names
+                    num_agents = len(square.agents)
+                    for i, agent in enumerate(square.agents):
+                        text_size = int(self.cell_size * 0.3 / num_agents)  # Scale text size based on number of agents
+                        text_width = len(agent.name) * text_size * 0.6
+                        text_x = (top_left[0] + bottom_right[0]) // 2 - text_width // 2
+                        text_y = top_left[1] + (i + 1) * self.cell_size // (num_agents + 1) - text_size // 2
+                        text_position = (text_x, text_y)
+                        self.draw_text(tag, text_position, agent.name, color=(0, 0, 0), size=text_size)
 
-                    # Draw the agent's name, centered and scaled
-                    self.draw_text(tag, text_position, square.agent.name, color=(0, 0, 0), size=text_size)
-                elif square.has_items():
-                    item = square.items[0]
+                num_items = len(square.items)
+                for i, item in enumerate(square.items):
+                    # Calculate offset based on number of items
+                    x_offset = (i - (num_items - 1) / 2) * (self.cell_size // (num_items + 1))
                     item_center = (
-                        (top_left[0] + bottom_right[0]) // 2,
+                        ((top_left[0] + bottom_right[0]) // 2) + x_offset,
                         (top_left[1] + bottom_right[1]) // 2
                     )
 
                     if item.shape == "circle":
-                        radius = self.cell_size // 4
+                        radius = self.cell_size // (4 + num_items // 2)  # Smaller radius with more items
                         self.draw_circle(tag, item_center, radius, item.color)
                     elif item.shape == "triangle":
-                        p1 = (item_center[0], item_center[1] - self.cell_size // 4)
-                        p2 = (item_center[0] - self.cell_size // 4, item_center[1] + self.cell_size // 4)
-                        p3 = (item_center[0] + self.cell_size // 4, item_center[1] + self.cell_size // 4)
+                        size = self.cell_size // (4 + num_items // 2)
+                        p1 = (item_center[0], item_center[1] - size)
+                        p2 = (item_center[0] - size, item_center[1] + size)
+                        p3 = (item_center[0] + size, item_center[1] + size)
                         self.draw_triangle(tag, p1, p2, p3, item.color)
                     elif item.shape == "square":
-                        item_top_left = (
-                            item_center[0] - self.cell_size // 4,
-                            item_center[1] - self.cell_size // 4
-                        )
-                        item_bottom_right = (
-                            item_center[0] + self.cell_size // 4,
-                            item_center[1] + self.cell_size // 4
-                        )
+                        size = self.cell_size // (4 + num_items // 2)
+                        item_top_left = (item_center[0] - size, item_center[1] - size)
+                        item_bottom_right = (item_center[0] + size, item_center[1] + size)
                         self.draw_item_square(tag, item_top_left, item_bottom_right, item.color)
+

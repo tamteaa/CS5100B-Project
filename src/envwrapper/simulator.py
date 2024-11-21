@@ -20,21 +20,38 @@ def run_simulation(env: ComplexGridworld):
         observation = env.get_agent_position(agent_id)
         agent.observation = f"Your current position is: {observation}"
 
+    env.variables["group_messages"] = []
+    env.score = 0
+
     for episode in range(env.max_episodes):
+        print(episode)
         for agent_id, agent in env.agents.items():
-            time.sleep(1)
+            time.sleep(1.5)
             # Agent makes a decision based on the current observation
             action_dict = agent.step()
 
             # Check if there is a message to send and distribute it to other agents
             message = action_dict.get("message", "")
             if message:
+                message = f"From: {agent.name}\nMessage: {message}\n"
                 for other_agent_id, other_agent in env.agents.items():
                     if other_agent_id != agent_id:  # Only send to other agents
-                        other_agent.add_inbox_message(agent.name, message)
+                        other_agent.add_inbox_message(message)
+                env.variables["group_messages"].append(
+                    {
+                        "from": agent.name,
+                        "message": message
+                    }
+                )
 
-            # Execute the action in the environment
-            agent.observation = env.step(agent.id, action_dict["action_name"])
+            if action_dict.get("action_name", None) == None:
+                agent.observation = "your action was invalid"
+            else:
+                # Execute the action in the environment
+                agent.observation = env.step(agent.id, action_dict["action_name"])
+
+            if env.terminated:
+                break
 
         if env.terminated:
             break
@@ -111,6 +128,7 @@ class Simulator:
             if self.use_gui:
                 gui = GUI(env=env)
                 gui.run(run_simulation)
+                gui.close()
             else:
                 run_simulation(env)
 
@@ -149,7 +167,7 @@ class Simulator:
             shared_agent_variables: dict,
             system_prompt: PromptTemplate,
             user_prompt: PromptTemplate,
-            backend_model: str
+            backend_model: tuple[str, str]
     ):
         agents = {}
         positions = set()
@@ -173,7 +191,8 @@ class Simulator:
             variables.update({
                 "name": name,
                 "agent_names": selected_names,
-                "agent_id": agent_id
+                "agent_id": agent_id,
+                "memory": ""
             })
 
             agent_system_prompt = copy.deepcopy(system_prompt)
@@ -184,10 +203,11 @@ class Simulator:
                 name=name,
                 variables=variables,
                 action_space=action_space,
-                backend_model=backend_model
+                backend_provider=backend_model[0],
+                backend_model=backend_model[1]
             )
             agent.set_system_prompt(str(agent_system_prompt))
-            agent.set_user_prompt( copy.deepcopy(user_prompt))
+            agent.set_user_prompt(copy.deepcopy(user_prompt))
             agent.set_start_position(starting_positions[i])
             agents[i] = agent
 
@@ -248,6 +268,7 @@ class Simulator:
         output_instruction_text = environment_config["output_instruction_text"]
         max_episodes = environment_config["max_episodes"]
         env_variables = environment_config["env_variables"]
+        env_variables["score"] = 0
         actions = self.get_actions_from_yaml(environment_config["actions"])
 
         unified_goal = environment_config["unified_goal"]
@@ -266,7 +287,13 @@ class Simulator:
             "actions": format_actions(actions)
         }
 
-        backend_model = config.get("backend_model_id", "llama-3.1-8b-instant")
+        backend_model: str = config.get("backend_model", "")
+        if backend_model == "":
+            raise ValueError("Must have a backend model")
+
+        backend_provider = config.get("backend_provider", "")
+        if backend_provider == "":
+            raise ValueError("Must have a backend provider")
 
         # Set up agents using the setup_agents method
         agents = self.setup_agents(
@@ -276,12 +303,13 @@ class Simulator:
             grid_size=grid_size,
             system_prompt=system_prompt,
             user_prompt=user_prompt_template,
-            backend_model=backend_model
+            backend_model=(backend_provider, backend_model)
         )
 
         env = ComplexGridworld(agents=agents, grid_size=grid_size)
         env.max_episodes = max_episodes
         env.variables = env_variables
+        env.score = 0
         # Register the environment and termination condition
         termination_condition = config["termination_condition"]
         env.register_termination_callback(termination_condition)

@@ -1,0 +1,109 @@
+# Random Variables Definition
+random_variables:
+  grid_size_x: "random.choice([4, 5, 6])"
+  grid_size_y: "random.choice([4, 5, 6])"
+  computed_size_x: "grid_size_x - 1"
+  computed_size_y: "grid_size_y- 1"
+
+env_variables:
+  corner_positions:
+    - [0, 0]                          # South-West Corner
+    - [0, computed_size_x ]            # South-East Corner
+    - [computed_size_y, 0 ]            # North-West Corner
+    - [computed_size_y, computed_size_x]  # North-East Corner
+
+max_episodes: 10
+num_agents: 4
+grid_size: [grid_size_y, grid_size_x]  # If no value is specified, default grid size of (5,5) is used.
+output_instruction_text: |
+  You are required to respond in JSON format only.
+
+  Your response must include the following keys:
+  1. **action_name**: The name of the action you intend to perform.
+  2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
+  3. **message**: An optional but crucial message for communicating with other agents. Use this to propose corners, confirm assignments, or resolve conflicts. Every message will be shared with the entire group.
+  4. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
+  5. **reflection**: Reflect on your current progress towards the goal. Check if the score reflects that the objective is met. If not, analyze why and plan your next steps accordingly.
+  6. **add_memory**: (Optional) If you choose to use this, include any important information you want to remember for future turns. This memory will be appended to your existing memory and will be accessible in subsequent turns.
+  
+  Here is an example of the expected format:
+
+  {
+    "action_name": "",
+    "action_parameters": {},
+    "message": "",
+    "rationale": "",
+    "reflection": "",
+    "add_memory": ""
+  }
+
+  Remember, you must always output a JSON response following this structure.
+
+actions: |
+  - **north**
+  - **south**
+  - **west**
+  - **east**
+  - **skip**
+
+# Unified Goal for Each Agent
+unified_goal: |
+  Your goal is for each agent to reach an independent corner of the grid without sharing it with another agent. Your specific target position must be one of the following:
+  - South-West Corner: (0, 0)
+  - South-East Corner: (0, computed_size_x)
+  - North-West Corner: (computed_size_y, 0)
+  - North-East Corner: (computed_size_y, computed_size_x)
+
+  Initially, communicate with other agents to decide who will occupy which corner. Only start moving once all agents have agreed on unique corners to avoid conflicts.
+
+  ***IMPORTANT***:
+  - **Verification**: Continuously verify your progress by checking the current score.
+  - **Reflection**: If the score is not 100/100, reflect on possible reasons and discuss with other agents to resolve any issues.
+  - **Collaboration**: Work together to ensure all agents reach their assigned corners.
+
+  You must reach a score of 100/100 for the successful completion of the simulation.
+
+  **IMPORTANT**: Corners have a "target" item in them. Use this to verify you are in a corner
+
+prompt: |
+  [ Introduction ]
+  You are an Agent in a simulated gridworld environment, your mission is to strategically interact with the environment and other agents to achieve your objectives.
+
+  [Agent Information]
+  **Name**: <<name>>
+
+  **Goal** : <<goal>>
+
+  [ Environment Information ]
+  - **General** :
+      - Gridworld size: (computed_size_y, computed_size_x)
+        - The (0, 0) position in the gridworld is at the south-west corner, while the north-east corner is at (computed_size_y,computed_size_x).
+      - Total Agents (including you): <<n_agents>>
+      - Names of agents in simulation: <<agent_names>>
+  
+  ***IMPORTANT*** : Positions in the gridworld are in the form (y, x). 
+  
+  [ Action Space ]
+  - **Actions** :
+  <<actions>>
+
+user_prompt: |
+  [observation]
+  
+  The score is <<score>> / 100
+  
+  Memory: <<memory>>
+  
+  Your current goal is: <<goal>>'
+  
+  The observation from your previous action is:
+  <<observation>>
+
+  Your current position:
+      y-position: <<y_position>>
+      x-position: <<x_position>>
+
+  Your current inbox reads:
+  <<inbox>>
+  
+  **Note**: Before declaring that you have completed the objective, verify that the score is 100/100. If it's less, reflect on what might be missing and adjust your actions accordingly.

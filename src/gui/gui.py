@@ -13,7 +13,7 @@ class GUI:
         self.agents = env.agents
         self.is_running = True
         self.view = GridWorldView()
-        self.info_panel = InfoPanelView(env.agents)
+        self.info_panel = InfoPanelView(env)
         self.initial_width = 800
         self.initial_height = 800
         self.is_mac = platform.system() == "Darwin"
@@ -26,7 +26,7 @@ class GUI:
         self.info_panel_initialized = False
 
     def _setup_gui(self):
-        with dpg.window(label="Simulation", tag="primary_window", no_close=True):
+        with dpg.window(label="Simulation", tag="primary_window", no_close=True, no_scrollbar=True):
             with dpg.group(horizontal=True):
                 with dpg.group(tag="left_group"):
                     dpg.add_drawlist(width=self.initial_width // 2,
@@ -35,20 +35,21 @@ class GUI:
                 with dpg.group(tag="right_group"):
                     # Create a scrollable container for the info panel
                     with dpg.child_window(tag="info_panel_container", width=self.initial_width // 2,
-                                          height=self.initial_height):
+                                          height=self.initial_height, no_scrollbar=True):
                         dpg.add_group(tag="info_panel")
 
         dpg.create_viewport(title="GridWorld Simulation",
                             width=self.initial_width,
                             height=self.initial_height,
-                            resizable=True)
+                            resizable=True,
+                            )
 
         dpg.set_viewport_resize_callback(self._resize_callback)
         dpg.setup_dearpygui()
 
     def _resize_callback(self):
-        viewport_width = dpg.get_viewport_client_width()
-        viewport_height = dpg.get_viewport_client_height()
+        viewport_width = dpg.get_viewport_client_width() * 0.98
+        viewport_height = dpg.get_viewport_client_height() * 0.98
         dpg.configure_item("primary_window", width=viewport_width, height=viewport_height)
         panel_width = viewport_width // 2
         dpg.configure_item("grid_canvas", width=panel_width, height=viewport_height)
@@ -73,7 +74,7 @@ class GUI:
         while dpg.is_dearpygui_running() and self.is_running:
             self._render_frame()
             dpg.render_dearpygui_frame()
-            time.sleep(0.001)  # ~30 FPS
+            time.sleep(0.01)  # ~30 FPS
 
             if self.env.terminated:
                 break
