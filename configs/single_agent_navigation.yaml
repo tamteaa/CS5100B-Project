@@ -11,6 +11,20 @@ env_variables:
 max_episodes: 10
 num_agents: 1
 grid_size: [grid_size_y, grid_size_x]    # If no value is specified, default grid size of (5,5) is used.
+
+actions: |
+  - **north**
+  - **south**
+  - **west**
+  - **east**
+
+# Specify target clearly here.
+unified_goal: |
+  PRIMARY GOAL: Reach position [target_y, target_x]. This is when your x position is target_x, and y position is target_y.
+  Use your observations to determine the exact corner coordinates.
+
+
+# OPTIONAL PROMPTS. USE THESE TO OVERRIDE THE EXISTING PROMPTS
 output_instruction_text: |
   You are required to respond in JSON format only.
 
@@ -29,17 +43,7 @@ output_instruction_text: |
 
   Remember, you must always output a JSON response following this structure.
 
-actions: |
-  - **north**
-  - **south**
-  - **west**
-  - **east**
-
-# Specify target clearly here.
-unified_goal: |
-  PRIMARY GOAL: Reach position [target_y, target_x]. This is when your x position is target_x, and y position is target_y.
-  Use your observations to determine the exact corner coordinates.
-prompt: |
+system_prompt: |
   [ Introduction ]
   You are an Agent in a simulated gridworld environment, your mission is to strategically interact with the environment and other agents to achieve your objectives.
 

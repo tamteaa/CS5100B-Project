@@ -4,6 +4,35 @@ from src.environments.custom_environments.complex_gridworld_environment import S
 from src.agent.backend import Provider, TogetherModels, LocalModels, GroqModels
 
 
+def random_points_multi_agent_navigation_scoring_function(env):
+    # Get target positions from environment variables
+    targets_str = env.variables["target_positions"]
+    targets_list = eval(targets_str)  # Safely converts string representation to list of tuples
+    targets = set(map(tuple, targets_list))
+
+    # Add target items to the squares
+    for target in targets:
+        if len(env[target[0], target[1]].items) == 0:
+            env[target[0], target[1]].items = [
+                Item(item_type="target", color=(0, 0, 50, 128), shape="circle")
+            ]
+
+    # Track occupied targets
+    occupied_targets = set()
+
+    # Check each agent's position
+    for agent in env.agents.values():
+        agent_pos = tuple(agent.position)
+        if agent_pos in targets:
+            occupied_targets.add(agent_pos)
+
+    # Calculate score - each unique target found is worth equal points
+    points_per_target = 100 / len(targets)
+    env.score = len(occupied_targets) * points_per_target
+
+    # Return True if all targets are found
+    return len(occupied_targets) == len(targets)
+
 def single_agent_navigation_scoring_function(env):
     # Retrieve the target position from the environment's variables
     target_position = tuple(env.variables.get("target_position", None))
@@ -27,6 +56,7 @@ def single_agent_navigation_scoring_function(env):
 
 def multi_agent_navigation_scoring_function(env):
     # Define the four unique corner positions based on the grid size
+    print(env.variables)
     corners = {
         (0, 0),  # South-West Corner
         (0, env.grid_size[1] - 1),  # South-East Corner
@@ -88,7 +118,7 @@ load_dotenv(".env")
 if __name__ == "__main__":
     # Usage
     backend_provider = Provider.GROQ
-    backend_model = GroqModels.LLAMA_70B
+    backend_model = GroqModels.LLAMA_8B
 
     configs = {
         "single_agent_navigation": {
@@ -109,6 +139,12 @@ if __name__ == "__main__":
             "backend_provider": backend_provider,
             "backend_model": backend_model
         },
+        "random_points_multi_agent_navigation": {
+            "yaml_file": "./configs/random_points_multi_agent_navigation.yaml",
+            "termination_condition": random_points_multi_agent_navigation_scoring_function,
+            "backend_provider": backend_provider,
+            "backend_model": backend_model
+        },
     }
 
     simulator = Simulator(
@@ -119,5 +155,5 @@ if __name__ == "__main__":
 
     num_simulations = 5
     # list of length num_simulations with each score (x/100)
-    scores = simulator.run("multi_agent_navigation", num_simulations)
+    scores = simulator.run("random_points_multi_agent_navigation", num_simulations)
     print(scores)

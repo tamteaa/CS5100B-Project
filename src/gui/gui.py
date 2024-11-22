@@ -5,6 +5,7 @@ from src.gui.informational_panel import InfoPanelView
 import platform
 import time
 import threading
+import signal
 
 
 class GUI:
@@ -17,6 +18,7 @@ class GUI:
         self.initial_width = 800
         self.initial_height = 800
         self.is_mac = platform.system() == "Darwin"
+        self.simulation_thread = None
 
         # Initialize DearPyGUI context
         dpg.create_context()
@@ -24,6 +26,12 @@ class GUI:
 
         # Flag to track if info panel has been initialized
         self.info_panel_initialized = False
+
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
+
+    def _signal_handler(self, signum, frame):
+        self.close()
 
     def _setup_gui(self):
         with dpg.window(label="Simulation", tag="primary_window", no_close=True, no_scrollbar=True):
@@ -73,10 +81,12 @@ class GUI:
         """Start DearPyGUI main loop"""
         while dpg.is_dearpygui_running() and self.is_running:
             self._render_frame()
+
             dpg.render_dearpygui_frame()
             time.sleep(0.01)  # ~30 FPS
 
             if self.env.terminated:
+                print("stopping")
                 break
 
     def start(self):
@@ -86,20 +96,37 @@ class GUI:
         self._start_dearpygui()
 
     def close(self):
-        """Close the GUI"""
+        """Close the GUI and cleanup resources"""
+        if not self.is_running:
+            return
+
         self.is_running = False
-        dpg.destroy_context()
+
+        # Wait for simulation thread to finish
+        if self.simulation_thread and self.simulation_thread.is_alive():
+            self.simulation_thread.join(timeout=1.0)
+
+        # Force environment termination
+        self.env.terminated = True
+
+        # Ensure DearPyGUI cleanup happens in the main thread
+        if threading.current_thread() is threading.main_thread():
+            if dpg.is_dearpygui_running():
+                dpg.stop_dearpygui()
+            dpg.destroy_context()
+        else:
+            # Schedule cleanup for next frame if called from another thread
+            dpg.configure_item("primary_window", show=False)
 
     def run(self, sim_func):
-        simulation_thread = threading.Thread(target=sim_func, args=(self.env,))
-        simulation_thread.start()
+        """Run simulation in separate thread"""
+        self.simulation_thread = threading.Thread(target=sim_func, args=(self.env,))
+        self.simulation_thread.start()
 
-        # Start the GUI main loop (blocks the main thread)
-        self.start()
-
-        # Wait for the simulation thread to finish
-        simulation_thread.join()
-
-        # Close the GUI
-        self.close()
+        try:
+            self.start()
+        finally:
+            self.close()
+            if self.simulation_thread.is_alive():
+                self.simulation_thread.join(timeout=1.0)
 

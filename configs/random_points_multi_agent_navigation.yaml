@@ -1,0 +1,40 @@
+# Random Variables Definition
+random_variables:
+  grid_size_x: "random.choice([4, 5, 6])"
+  grid_size_y: "random.choice([4, 5, 6])"
+  computed_size_x: "grid_size_x - 1"
+  computed_size_y: "grid_size_y - 1"
+  num_agents: "random.choice([3, 4, 5])"
+  all_positions: "[(x,y) for x in range(grid_size_x-1) for y in range(grid_size_y-1)]"
+  target_positions: "random.sample(all_positions, num_agents)"
+
+env_variables:
+ target_positions: target_positions
+
+max_episodes: 10
+num_agents: num_agents
+grid_size: [grid_size_y, grid_size_x]
+
+actions: |
+  - **north**
+  - **south**
+  - **west**
+  - **east**
+  - **skip**
+
+
+# Unified Goal for Each Agent
+unified_goal: |
+ Your goal is to explore the grid and find unoccupied target positions. Once a target is found:
+ - Stay at that target location if no other agent already claims it
+ - If another agent is already there, continue searching for a different target
+ - Once at a target, communicate this to other agents
+ - Only one agent can occupy each target position
+ 
+ The simulation ends successfully when each agent occupies a unique target position (score 100/100).
+  
+
+# OPTIONAL PROMPTS. USE THESE TO OVERRIDE THE EXISTING PROMPTS
+system_prompt: NONE
+prompt: NONE
+user_prompt: NONE

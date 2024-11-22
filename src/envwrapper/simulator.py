@@ -17,6 +17,8 @@ from typing import List, Dict
 def run_simulation(env: ComplexGridworld):
     # Initial observation of the agent's position
     for agent_id, agent in env.agents.items():
+        agent.variables["current_episode"] = 0
+        agent.variables["max_episodes"] = env.max_episodes
         observation = env.get_agent_position(agent_id)
         agent.observation = f"Your current position is: {observation}"
 
@@ -27,6 +29,7 @@ def run_simulation(env: ComplexGridworld):
         print(episode)
         for agent_id, agent in env.agents.items():
             time.sleep(1.5)
+            agent.variables["current_episode"] = episode
             # Agent makes a decision based on the current observation
             action_dict = agent.step()
 
@@ -57,10 +60,9 @@ def run_simulation(env: ComplexGridworld):
             break
 
     # Final summary
-    if env.terminated:
-        print("Simulation Complete: The agent successfully reached the target position!")
-    else:
-        print("Simulation Complete: The agent did not reach the target position within the maximum number of episodes.")
+    print(f"Simulation Complete: the final score is {env.score}")
+
+    return 0
 
 
 class Simulator:
@@ -126,9 +128,11 @@ class Simulator:
                 env.db_manager = self.db_manager
 
             if self.use_gui:
+                if num_simulations >= 20:
+                    print("There is a bug in the GUI, you may need to exit the window at the end of a simulation.")
+
                 gui = GUI(env=env)
                 gui.run(run_simulation)
-                gui.close()
             else:
                 run_simulation(env)
 
@@ -165,12 +169,14 @@ class Simulator:
             action_space: List[Action],
             grid_size: tuple[int, int],
             shared_agent_variables: dict,
-            system_prompt: PromptTemplate,
-            user_prompt: PromptTemplate,
+            system_prompt: str,
+            user_prompt: str,
+            output_instruction_prompt: str,
             backend_model: tuple[str, str]
     ):
         agents = {}
         positions = set()
+        num_agents = int(num_agents)
 
         # Generate random, unique starting positions within the grid size
         while len(positions) < num_agents:
@@ -195,9 +201,6 @@ class Simulator:
                 "memory": ""
             })
 
-            agent_system_prompt = copy.deepcopy(system_prompt)
-            agent_system_prompt.set_variables(variables)
-
             agent = Agent(
                 agent_id=agent_id,
                 name=name,
@@ -206,9 +209,27 @@ class Simulator:
                 backend_provider=backend_model[0],
                 backend_model=backend_model[1]
             )
-            agent.set_system_prompt(str(agent_system_prompt))
-            agent.set_user_prompt(copy.deepcopy(user_prompt))
+
             agent.set_start_position(starting_positions[i])
+
+            # setting the system prompt, if NONE in config, we use the default system prompt
+            if str(output_instruction_prompt) == "NONE":
+                agent.use_output_instructions_prompt()
+            else:
+                agent.set_output_instructions_prompt(output_instruction_prompt)
+
+            # setting the system prompt, if NONE in config, we use the default system prompt
+            if str(system_prompt) == "NONE":
+                agent.use_default_system_prompt()
+            else:
+                agent.set_system_prompt(system_prompt=system_prompt)
+
+            # setting the user_prompt, if NONE in config, we use the default user prompt
+            if user_prompt == "NONE":
+                agent.use_default_user_prompt()
+            else:
+                agent.set_user_prompt(user_prompt=user_prompt)
+
             agents[i] = agent
 
         return agents
@@ -265,20 +286,17 @@ class Simulator:
         # Extract environment properties from the YAML configuration
         num_agents = environment_config["num_agents"]
         grid_size = tuple(environment_config.get("grid_size", [5, 5]))
-        output_instruction_text = environment_config["output_instruction_text"]
         max_episodes = environment_config["max_episodes"]
         env_variables = environment_config["env_variables"]
         env_variables["score"] = 0
         actions = self.get_actions_from_yaml(environment_config["actions"])
 
         unified_goal = environment_config["unified_goal"]
-        prompt = environment_config["prompt"]
 
-        user_prompt = environment_config["user_prompt"]
-
-        system_prompt = PromptTemplate(initial_data=prompt + output_instruction_text)
-
-        user_prompt_template = PromptTemplate(initial_data=user_prompt)
+        # optional configs
+        output_instruction_prompt = environment_config.get("output_instruction_prompt", "NONE")
+        system_prompt = environment_config.get("system_prompt", "NONE")
+        user_prompt = environment_config.get("user_prompt", "NONE")
 
         shared_agent_variables = {
             "grid_size": grid_size,
@@ -302,7 +320,8 @@ class Simulator:
             shared_agent_variables=shared_agent_variables,
             grid_size=grid_size,
             system_prompt=system_prompt,
-            user_prompt=user_prompt_template,
+            user_prompt=user_prompt,
+            output_instruction_prompt=output_instruction_prompt,
             backend_model=(backend_provider, backend_model)
         )
 

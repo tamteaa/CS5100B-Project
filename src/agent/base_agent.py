@@ -7,6 +7,77 @@ from src.agent.backend.togetherai_backend import TogetherBackend
 from src.agent.backend.openai_backend import OpenAIBackend
 from src.agent.backend import Provider
 from src.agent.backend.local_backend import LocalBackend
+from src.agent.prompts import PromptTemplate
+
+DEFAULT_SYSTEM_PROMPT = """[ Introduction ]
+You are an Agent in a simulated gridworld environment, your mission is to strategically interact with the environment and other agents to achieve your objectives.
+
+[Agent Information]
+**Name**: <<name>>
+
+**Goal** : <<goal>>
+
+[ Environment Information ]
+- **General** :
+  - Gridworld size: (computed_size_y, computed_size_x)
+    - The (0, 0) position in the gridworld is at the south-west corner, while the north-east corner is at (computed_size_y,computed_size_x).
+  - Total Agents (including you): <<n_agents>>
+  - Names of agents in simulation: <<agent_names>>
+
+***IMPORTANT*** : Positions in the gridworld are in the form (y, x). 
+
+[ Action Space ]
+- **Actions** :
+<<actions>>"""
+
+
+DEFAULT_SYSTEM_PROMPT_OUTPUT_INSTRUCTIONS = """
+You are required to respond in JSON format only.
+
+Your response must include the following keys:
+1. **action_name**: The name of the action you intend to perform.
+2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
+3. **message**: An optional but crucial message for communicating with other agents. Use this to propose corners, confirm assignments, or resolve conflicts. Every message will be shared with the entire group.
+4. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
+5. **reflection**: Reflect on your current progress towards the goal. Check if the score reflects that the objective is met. If not, analyze why and plan your next steps accordingly.
+6. **add_memory**: (Optional) If you choose to use this, include any important information you want to remember for future turns. This memory will be appended to your existing memory and will be accessible in subsequent turns.
+
+Here is an example of the expected format:
+
+{
+    "action_name": "",
+    "action_parameters": {},
+    "message": "",
+    "rationale": "",
+    "reflection": "",
+    "add_memory": ""
+}
+
+Remember, you must always output a JSON response following this structure."""
+
+DEFAULT_USER_PROMPT = """
+[observation]
+
+Episode <<current_episode>> of <<max_episodes>>
+
+The score is <<score>> / 100
+
+Memory: <<memory>>
+
+Your current goal is: <<goal>>'
+
+The observation from your previous action is:
+<<observation>>
+
+Your current position:
+  y-position: <<y_position>>
+  x-position: <<x_position>>
+
+Your current inbox reads:
+<<inbox>>
+
+**Note**: Before declaring that you have completed the objective, verify that the score is 100/100. If it's less, reflect on what might be missing and adjust your actions accordingly.
+"""
 
 
 class Agent:
@@ -42,7 +113,6 @@ class Agent:
             Provider.GROQ,
             Provider.TOGETHER,
             Provider.LOCAL,
-
         ]
 
         if backend_provider not in valid_backends:
@@ -63,6 +133,7 @@ class Agent:
         self.backend = self.backend_map[backend_provider.name](model_id=self.backend_model)
 
         self.user_prompt = None
+        self.output_instructions = None
 
     def create_system_prompt(self, prompt_name: str):
         raise ValueError("Use a Yaml, this method is outdated")
@@ -88,17 +159,37 @@ class Agent:
         """
         return self.messages
 
-    def set_system_prompt(self, prompt: str):
+    def set_system_prompt(self, system_prompt: str):
         """
         Sets a system prompt at the beginning of the conversation.
         """
-        self.messages.insert(0, {"role": "system", "content": prompt})
+        if self.output_instructions == "NONE":
+            raise ValueError("must set output instructions first, use agent.set_output_instructions(output_instructions: str) or agent.use_default_output_instructions()")
 
-    def set_user_prompt(self, prompt):
+        system_prompt = PromptTemplate(initial_data=system_prompt)
+        system_prompt.set_variables(self.variables)
+        self.messages.insert(0, {"role": "system", "content": str(system_prompt) + "\n" + self.output_instructions})
+
+    def use_default_system_prompt(self):
+        self.set_system_prompt(DEFAULT_SYSTEM_PROMPT)
+
+    def set_output_instructions_prompt(self, output_instructions: str):
         """
         Sets a system prompt at the beginning of the conversation.
         """
-        self.user_prompt = prompt
+        self.output_instructions = output_instructions
+
+    def use_output_instructions_prompt(self):
+        self.output_instructions = DEFAULT_SYSTEM_PROMPT_OUTPUT_INSTRUCTIONS
+
+    def set_user_prompt(self, user_prompt):
+        """
+        Sets the user prompt format.
+        """
+        self.user_prompt = PromptTemplate(initial_data=user_prompt)
+
+    def use_default_user_prompt(self):
+        self.user_prompt = PromptTemplate(initial_data=DEFAULT_USER_PROMPT)
 
     def set_action_space(self, action_space: [Action]):
         self.action_space = action_space
@@ -119,6 +210,10 @@ class Agent:
         self.variables["observation"] = self.observation
         self.variables["x_position"] = self.position[1]
         self.variables["y_position"] = self.position[0]
+
+        current_score = self.variables.get("score", "NONE")
+        if current_score == "NONE":
+            self.variables["score"] = 0
 
         if self.inbox:  # Only format if there are messages
             formatted_messages = "============\nInbox:\n\n"
