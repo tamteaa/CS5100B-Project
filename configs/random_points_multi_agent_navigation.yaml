@@ -5,7 +5,7 @@ random_variables:
   computed_size_x: "grid_size_x - 1"
   computed_size_y: "grid_size_y - 1"
   num_agents: "random.choice([3, 4, 5])"
-  all_positions: "[(x,y) for x in range(grid_size_x-1) for y in range(grid_size_y-1)]"
+  all_positions: "[(y,x) for y in range(grid_size_y) for x in range(grid_size_x)]"
   target_positions: "random.sample(all_positions, num_agents)"
 
 env_variables:
