@@ -3,7 +3,7 @@ import copy
 import yaml
 import re
 import time
-from src.environments.custom_environments.complex_gridworld_environment import ComplexGridworld
+from src.environments.custom_environments.complex_gridworld_environment import ComplexGridworld, Item
 from src.gui.gui import GUI
 from src.agent.actions import Action, format_actions
 from src.storage.database import DatabaseManager
@@ -292,7 +292,11 @@ class Simulator:
         actions = self.get_actions_from_yaml(environment_config["actions"])
 
         unified_goal = environment_config["unified_goal"]
-
+        
+        # Extract items position
+        items_config = environment_config.get("env_variables", {}).get("item_positions", [])
+        items = {tuple(pos): [Item(item_type="item", color=(0, 0, 255), shape="triangle")] for pos in eval(items_config)}
+        
         # optional configs
         output_instruction_prompt = environment_config.get("output_instruction_prompt", "NONE")
         system_prompt = environment_config.get("system_prompt", "NONE")
@@ -325,7 +329,7 @@ class Simulator:
             backend_model=(backend_provider, backend_model)
         )
 
-        env = ComplexGridworld(agents=agents, grid_size=grid_size)
+        env = ComplexGridworld(agents=agents, grid_size=grid_size, items=items)
         env.max_episodes = max_episodes
         env.variables = env_variables
         env.score = 0
