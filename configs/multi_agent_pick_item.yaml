@@ -3,16 +3,18 @@ random_variables:
   grid_size_y: "random.choice([3, 4, 5])"
   computed_size_x: "grid_size_x - 1"
   computed_size_y: "grid_size_y - 1"
-  target_x: "random.randint(0, grid_size_x - 1)"
-  target_y: "random.randint(0, grid_size_y - 1)"
-  item_positions: "random.sample([(y, x) for y in range(grid_size_y) for x in range(grid_size_x)], 1)"
+  num_agents: "random.choice([2, 3])"
+  item_positions: "random.sample([(y, x) for y in range(grid_size_y) for x in range(grid_size_x)], num_agents)"
+  agent_positions: "random.sample([(y, x) for y in range(grid_size_y) for x in range(grid_size_x) if (y, x) not in item_positions], num_agents)"
+  target_positions: "random.sample([(y, x) for y in range(grid_size_y) for x in range(grid_size_x) if (y, x) not in item_positions and (y, x) not in agent_positions], num_agents)"
 
 env_variables:
-  target_position: [target_y, target_x]
   item_positions: item_positions
+  agent_positions: agent_positions
+  target_positions: target_positions
 
-max_episodes: 15
-num_agents: 1
+max_episodes: 20
+num_agents: num_agents
 grid_size: [grid_size_y, grid_size_x]
 
 actions: |
@@ -25,7 +27,20 @@ actions: |
 
 unified_goal: |
   PRIMARY GOAL: 
-  First pick up item at item_positions. Then verify and memorize the item is picked up successfully. Finally go to target position [target_y, target_x] and drop off the item.  
+  1. Coordinate with other agents to pick up items at item_positions.
+  2. Verify and memorize the item is picked up successfully.
+  3. Drop off items at target_positions.
+  4. The simulation ends successfully when every target postions is occupied a item (score 100/100).
+
+  Initially, communicate with other agents to decide who will pick up which item and drop off at which target position. 
+  Only start moving once all agents have agreed on unique assignment to avoid conflicts.
+
+  ***IMPORTANT***:
+  - **Verification**: Continuously verify your progress by checking the current score.
+  - **Reflection**: If the score is not 100/100, reflect on possible reasons and discuss with other agents to resolve any issues.
+  - **Collaboration**: Work together to ensure all agents pick up their assigned items and drop off at assigned position.
+
+  You must reach a score of 100/100 for the successful completion of the simulation.
 
 system_prompt: |
   [ Introduction ]

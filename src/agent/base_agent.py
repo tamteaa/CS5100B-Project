@@ -108,6 +108,8 @@ class Agent:
         self.inbox = []
 
         self.observation = ""
+        
+        self.item = None
 
         valid_backends = [
             Provider.GROQ,

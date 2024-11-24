@@ -59,6 +59,8 @@ class ComplexGridworld:
         if items:
             for (row, col), item_list in items.items():
                 self.grid[row][col].items.extend(item_list)
+            
+            
 
         self.max_episodes = 0
         self.variables = {
@@ -125,11 +127,22 @@ class ComplexGridworld:
             new_col = max(0, col - 1)
         elif action == 'pick':
             if self.grid[row][col].has_items():
-                return "You pick up the item"
+                item = self.grid[row][col].pick_up_item()
+                if item and item.item_type == "item":
+                    agent.item = item
+                    return "You pick up the item"
+                else:
+                    self.grid[row][col].items.append(item)
+                    return "No item here"
             else:
                 return "No item here"
         elif action == 'drop':
-            return "You drop off the item"
+            if agent.item:
+                self.grid[row][col].items.append(agent.item)
+                agent.item = None
+                return "You drop off the item"
+            else:
+                return "You are not holding any item"
 
         if action == "skip":
             current_square = self.grid[row][col]

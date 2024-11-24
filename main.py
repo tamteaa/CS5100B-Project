@@ -111,33 +111,63 @@ def align_alphabetically_task_scoring_function(env):
     return correct_positions == total_agents
 
 def single_agent_pick_item_scoring_function(env):
-    
+    # Assume there is only one target position
     target_position = tuple(env.variables.get("target_position", None))
     if target_position is None:
         raise ValueError("Target position cannot be None")
-    
-    env[target_position[0], target_position[1]] = Square(
-        items=[
-            Item(item_type="target", color=(0, 0, 100), shape="circle")
-        ]
-    )
+
+    if len(env[target_position[0], target_position[1]].items) == 0:
+        env[target_position[0], target_position[1]].items.append(
+            Item(item_type="target", color=(0, 0, 50, 128), shape="circle")
+        )
 
     total_items = 0
     items_in_target = 0
 
     for row in range(env.grid_size[0]):
         for col in range(env.grid_size[1]):
-            items_in_square = len(env.grid[row][col].items)
-            total_items += items_in_square
-            if (row, col) == target_position:
-                items_in_target += items_in_square
+            for item in env.grid[row][col].items:
+                if item.item_type == "item":
+                    total_items += 1
+                    if (row, col) == target_position:
+                        items_in_target += 1
 
     if total_items > 0:
         env.score = (items_in_target / total_items) * 100
     else:
         env.score = 0
 
-    return items_in_target == total_items
+    return total_items > 0 and items_in_target == total_items
+
+def multi_agent_pick_item_scoring_function(env):
+    target_positions = env.variables.get("target_positions", [])
+    if not target_positions:
+        raise ValueError("Target positions cannot be None")
+    target_positions = eval(target_positions)
+    
+    total_items = 0
+    items_in_target = 0
+    for target in target_positions:
+        if len(env[target[0], target[1]].items) == 0:
+            env[target[0], target[1]].items = [
+                Item(item_type="target", color=(0, 0, 50, 128), shape="circle")
+            ]
+            
+    for row in range(env.grid_size[0]):
+        for col in range(env.grid_size[1]):
+            for item in env.grid[row][col].items:
+                if item.item_type == "item":
+                    total_items += 1
+                    if (row, col) in target_positions:
+                        items_in_target += 1
+
+    if total_items > 0:
+        env.score = (items_in_target / total_items) * 100
+    else:
+        env.score = 0
+
+    return total_items > 0 and items_in_target == len(target_positions)
+    
 
 # Load the GROQ API KEY from a .env file
 load_dotenv(".env")
@@ -146,7 +176,7 @@ load_dotenv(".env")
 if __name__ == "__main__":
     # Usage
     backend_provider = Provider.GROQ
-    backend_model = GroqModels.LLAMA_70B
+    backend_model = GroqModels.LLAMA_8B
 
     configs = {
         "single_agent_navigation": {
@@ -179,6 +209,12 @@ if __name__ == "__main__":
             "backend_provider": backend_provider,
             "backend_model": backend_model
         },
+        "multi_agent_pick_item": {
+            "yaml_file": "./configs/multi_agent_pick_item.yaml",
+            "termination_condition": multi_agent_pick_item_scoring_function,
+            "backend_provider": backend_provider,
+            "backend_model": backend_model
+        },
     }
 
     simulator = Simulator(
@@ -189,5 +225,5 @@ if __name__ == "__main__":
 
     num_simulations = 5
     # list of length num_simulations with each score (x/100)
-    scores = simulator.run("random_points_multi_agent_navigation", num_simulations)
+    scores = simulator.run("multi_agent_pick_item", num_simulations)
     print(scores)
