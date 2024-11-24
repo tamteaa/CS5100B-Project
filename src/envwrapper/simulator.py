@@ -294,8 +294,10 @@ class Simulator:
         unified_goal = environment_config["unified_goal"]
         
         # Extract items position
-        items_config = environment_config.get("env_variables", {}).get("item_positions", [])
-        items = {tuple(pos): [Item(item_type="item", color=(0, 0, 255), shape="triangle")] for pos in eval(items_config)}
+        items_config = environment_config.get("env_variables", {}).get("item_positions", None)
+        items = None
+        if items_config is not None:
+            items = {tuple(pos): [Item(item_type="item", color=(0, 0, 255), shape="triangle")] for pos in eval(items_config)}
         
         # optional configs
         output_instruction_prompt = environment_config.get("output_instruction_prompt", "NONE")
