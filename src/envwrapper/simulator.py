@@ -23,6 +23,7 @@ def run_simulation(env: ComplexGridworld):
     for agent_id, agent in env.agents.items():
         agent.variables["current_episode"] = 0
         agent.variables["max_episodes"] = env.max_episodes
+        agent.variables["steps_taken"] = 0
         observation = env.get_agent_position(agent_id)
         agent.observation = f"Your current position is: {observation}"
 
@@ -91,6 +92,8 @@ def run_simulation(env: ComplexGridworld):
             else:
                 # Execute the action in the environment
                 agent.observation = env.step(agent.id, action_dict["action_name"])
+                if action_dict.get("action_name", None) in ["north", "south", "east", "west"]:
+                    agent.variables["steps_taken"] += 1
 
             if env.terminated:
                 break
