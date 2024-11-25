@@ -6,3 +6,8 @@
 *.db
 
 **/__pycache__/
+
+
+finetune_logs
+
+*.jsonl

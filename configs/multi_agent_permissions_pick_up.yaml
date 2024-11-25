@@ -1,0 +1,44 @@
+random_variables:
+  grid_size_x: "random.choice([3, 4, 5])"
+  grid_size_y: "random.choice([3, 4, 5])"
+  num_agents: "random.choice([2])"
+
+  # Generate all possible positions
+  all_positions: "[(x, y) for y in range(grid_size_y) for x in range(grid_size_x)]"
+
+  # Generate agent positions first
+  agent_positions: "random.sample(all_positions, num_agents)"
+
+  # Generate item positions from remaining spots
+  remaining_after_agents: "[pos for pos in all_positions if pos not in agent_positions]"
+  item_positions: "random.sample(remaining_after_agents, num_agents)"
+
+  # Generate target positions from remaining spots
+  remaining_for_targets: "[pos for pos in remaining_after_agents if pos not in item_positions]"
+  target_positions: "random.sample(remaining_for_targets, num_agents)"
+
+env_variables:
+  agent_positions: agent_positions
+  item_positions: item_positions  # Added this
+  target_positions: target_positions
+  use_permissions: True
+
+max_episodes: 25
+num_agents: num_agents
+grid_size: [grid_size_x, grid_size_y]
+
+actions: |
+ - **north**
+ - **south**
+ - **west**
+ - **east**
+ - **pick**
+ - **drop**
+
+
+unified_goal: |
+ Items are at positions: {item_positions}
+ Target positions: {target_positions}
+
+ Move the Items to the target target positions.
+ Score 100/100 required for completion.

@@ -6,11 +6,11 @@ random_variables:
   target_y: "random.randint(0, grid_size_y - 1)"
 
 env_variables:
-  target_position: [target_y, target_x]
+  target_position: [target_x, target_y]
 
 max_episodes: 10
 num_agents: 1
-grid_size: [grid_size_y, grid_size_x]    # If no value is specified, default grid size of (5,5) is used.
+grid_size: [grid_size_x, grid_size_y]    # If no value is specified, default grid size of (5,5) is used.
 
 actions: |
   - **north**
@@ -20,63 +20,5 @@ actions: |
 
 # Specify target clearly here.
 unified_goal: |
-  PRIMARY GOAL: Reach position [target_y, target_x]. This is when your x position is target_x, and y position is target_y.
+  PRIMARY GOAL: Reach position [target_x, target_y]. This is when your x position is target_x, and y position is target_y.
   Use your observations to determine the exact corner coordinates.
-
-
-# OPTIONAL PROMPTS. USE THESE TO OVERRIDE THE EXISTING PROMPTS
-output_instruction_text: |
-  You are required to respond in JSON format only.
-
-  Your response must include the following keys:
-  1. **action_name**: The name of the action you intend to perform.
-  2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
-  3. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
-
-  Here is an example of the expected format:
-
-  {
-    "action_name": "north",
-    "action_parameters": {"steps": 1},
-    "rationale": "Moving up to get closer to the target position."
-  }
-
-  Remember, you must always output a JSON response following this structure.
-
-system_prompt: |
-  [ Introduction ]
-  You are an Agent in a simulated gridworld environment, your mission is to strategically interact with the environment and other agents to achieve your objectives.
-
-  The (0, 0) position in the gridworld is at the south-west corner, while the north-east corner is at (y grid size, x grid size).
-
-  [Agent Information]
-  **Name**: <<name>>
-
-  **Goal** : <<goal>>
-
-  [ Environment Information ]
-  - **General** :
-      - Gridworld size: <<gridworld_size>>
-      - Total Agents (including you): <<n_agents>>
-      - Names of agents in simulation: <<agent_names>>
-  ***IMPORTANT*** : Positions in the gridworld are in the form (y, x). 
-  [ Action Space ]
-  - **Actions** :
-  <<actions>>
-
-
-user_prompt: |
-  [observation]
-
-  Your current goal is: <<goal>>'
-
-  The observation from your previous action is:
-  <<observation>>
-
-  Your current position:
-      x-position: <<x_position>>
-      y-position: <<y_position>>
-
-  Your current inbox reads:
-  <<inbox>>
-

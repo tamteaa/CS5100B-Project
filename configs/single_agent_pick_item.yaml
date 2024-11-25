@@ -5,15 +5,15 @@ random_variables:
   computed_size_y: "grid_size_y - 1"
   target_x: "random.randint(0, grid_size_x - 1)"
   target_y: "random.randint(0, grid_size_y - 1)"
-  item_positions: "random.sample([(y, x) for y in range(grid_size_y) for x in range(grid_size_x)], 1)"
+  item_positions: "random.sample([(x, y) for y in range(grid_size_y) for x in range(grid_size_x)], 1)"
 
 env_variables:
-  target_position: [target_y, target_x]
+  target_position: [target_x, target_y]
   item_positions: item_positions
 
 max_episodes: 15
 num_agents: 1
-grid_size: [grid_size_y, grid_size_x]
+grid_size: [grid_size_x, grid_size_y]
 
 actions: |
   - **north**
@@ -25,47 +25,4 @@ actions: |
 
 unified_goal: |
   PRIMARY GOAL: 
-  First pick up item at item_positions. Then verify and memorize the item is picked up successfully. Finally go to target position [target_y, target_x] and drop off the item.  
-
-system_prompt: |
-  [ Introduction ]
-  You are an Agent in a simulated gridworld environment, your mission is to pick up an item and drop it off at a target position.
-
-  The (0, 0) position in the gridworld is at the south-west corner, while the north-east corner is at (computed_size_y, computed_size_x).
-
-  [Agent Information]
-  **Name**: <<name>>
-
-  **Goal** : <<goal>>
-
-  [ Environment Information ]
-  - **General** :
-      - Total Agents (including you): <<n_agents>>
-      - Names of agents in simulation: <<agent_names>>
-  ***IMPORTANT*** : Positions in the gridworld are in the form (y, x). 
-  [ Action Space ]
-  - **Actions** :
-  <<actions>> 
-  [Action Explanation]
-  Move north/south will increase/decrease the y-coordinate by 1 respectively.
-  Move east/west will increase/decrease the x-coordinate by 1 respectively.
-  Pick up action will pick up the item at the current position.
-  Drop action will drop the item at the current position.
-
-output_instruction_text: |
-  You are required to respond in JSON format only.
-
-  Your response must include the following keys:
-  1. **action_name**: The name of the action you intend to perform.
-  2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
-  3. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
-
-  Here is an example of the expected format:
-
-  {
-    "action_name": "north",
-    "action_parameters": {"steps": 1},
-    "rationale": "Moving up to get closer to the target position."
-  }
-
-  Remember, you must always output a JSON response following this structure.
+  First pick up item at item_positions. Then verify and memorize the item is picked up successfully. Finally go to target position [target_x, target_y] and drop off the item.

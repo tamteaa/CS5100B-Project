@@ -16,12 +16,14 @@ class Table:
         self.columns = columns
         self.cursor = self.connection.cursor()
         self.create_table()
+
     def create_table(self) -> None:
         """Creates a table in the database based on the specified columns."""
         columns_def = ', '.join([f"{col_name} {col_type}" for col_name, col_type in self.columns.items()])
         create_query = f"CREATE TABLE IF NOT EXISTS {self.name} ({columns_def})"
         self.cursor.execute(create_query)
         self.connection.commit()
+
     def insert(self, **kwargs: Any) -> None:
         """
         Inserts a row into the table, automatically serializing dictionaries or lists to JSON.

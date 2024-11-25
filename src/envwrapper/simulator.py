@@ -1,20 +1,24 @@
-import copy
-
 import yaml
 import re
 import time
 from src.environments.custom_environments.complex_gridworld_environment import ComplexGridworld, Item
 from src.gui.gui import GUI
 from src.agent.actions import Action, format_actions
+from src.environments.DEFAULT_CONFIGS import DEFAULT_CONFIGS
 from src.storage.database import DatabaseManager
 from src.agent.base_agent import Agent
 import random
-from src.agent.prompts import PromptTemplate
 from typing import List, Dict
+import uuid  # Add this at the top with other imports
 
 
 # Define the simulation logic in a function
 def run_simulation(env: ComplexGridworld):
+    if env.use_db:
+        env.db_manager = DatabaseManager(reset_db=False)
+
+    env.sim_id = str(uuid.uuid4())
+
     # Initial observation of the agent's position
     for agent_id, agent in env.agents.items():
         agent.variables["current_episode"] = 0
@@ -22,16 +26,51 @@ def run_simulation(env: ComplexGridworld):
         observation = env.get_agent_position(agent_id)
         agent.observation = f"Your current position is: {observation}"
 
+        if env.db_manager is not None:
+            # Log user observation to the database
+            env.db_manager["episodes"].insert(
+                environment_name=env.name,
+                simulation_id=env.sim_id,
+                episode_number=0,
+                agent_id=agent_id,
+                role="system",
+                content=agent.messages[0]["content"],
+                action=None,
+            )
+
     env.variables["group_messages"] = []
     env.score = 0
 
     for episode in range(env.max_episodes):
-        print(episode)
         for agent_id, agent in env.agents.items():
             time.sleep(1.5)
             agent.variables["current_episode"] = episode
+
             # Agent makes a decision based on the current observation
             action_dict = agent.step()
+
+            if env.db_manager is not None:
+
+                # Log user observation to the database
+                env.db_manager["episodes"].insert(
+                    environment_name=env.name,
+                    simulation_id=env.sim_id,
+                    episode_number=episode,
+                    agent_id=agent_id,
+                    role="user",
+                    content=agent.last_user_message,
+                    action=None,
+                )
+
+                env.db_manager["episodes"].insert(
+                    environment_name=env.name,
+                    simulation_id=env.sim_id,
+                    episode_number=episode,
+                    agent_id=agent_id,
+                    role="assistant",
+                    content=agent.last_assistant_message,
+                    action=None,  #
+                )
 
             # Check if there is a message to send and distribute it to other agents
             message = action_dict.get("message", "")
@@ -59,6 +98,7 @@ def run_simulation(env: ComplexGridworld):
         if env.terminated:
             break
 
+    env.terminated = True
     # Final summary
     print(f"Simulation Complete: the final score is {env.score}")
 
@@ -74,7 +114,10 @@ class Simulator:
             self,
             use_db: bool,
             use_gui: bool,
-            configs: Dict[str, Dict]
+            backend_provider,
+            backend_model,
+            configs: Dict[str, Dict] = DEFAULT_CONFIGS,
+            db_name: str = "simulation_data"
     ):
         """
         Initializes an empty dictionary to keep track of each environment.
@@ -83,11 +126,17 @@ class Simulator:
         :param use_gui: Boolean to use GUI
         """
         self.use_db = use_db
+        self.db_name = db_name
         self.use_gui = use_gui
         self.configs = configs
 
+        for key, config in self.configs.items():
+            config["backend_provider"] = backend_provider
+
+        for key, config in self.configs.items():
+            config["backend_model"] = backend_model
+
         self.environments: dict[str, ComplexGridworld] = {}
-        self.db_manager = DatabaseManager() if use_db else None
 
         self.name_bank = [
             "Alice", "Bob", "Charlie", "Diana", "Eve", "Frank",
@@ -98,16 +147,36 @@ class Simulator:
         ]
 
         self.action_bank = {
-            "north": Action(name="north", description="Move one step upward on the grid."),
-            "south": Action(name="south", description="Move one step downward on the grid."),
-            "west": Action(name="west", description="Move one step to the left on the grid."),
-            "east": Action(name="east", description="Move one step to the right on the grid."),
+            "north": Action(
+                name="north",
+                description="Move one step north, which increases your y-coordinate by 1 (0,0) -> (0,1)"),
+            "south": Action(
+                name="south",
+                description="Move one step south, which decreases your y-coordinate by 1 (0,1) -> (0,0)"
+            ),
+            "west": Action(
+                name="west",
+                description="Move one step west, which decreases your x-coordinate by 1 (1,0) -> (0,0)"
+            ),
+            "east": Action(
+                name="east",
+                description="Move one step east, which increases your x-coordinate by 1 (0,0) -> (1,0)"
+            ),
             "skip": Action(name="skip", description="Do nothing and skip this step."),
             "pick":  Action(name="pick", description="Pick up the item at current position"),
             "drop": Action(name="drop", description="Drop off the item at current position"),
         }
 
         self.random_variables = {}
+
+        self.sim_num = 0
+
+    def list(self):
+        return [key for key, config in self.configs.items()]
+
+    def run_multiple(self, config_keys: List, num_simulations: int = 1):
+        for config in config_keys:
+            self.run(config, num_simulations)
 
     def run(self, config_key: str, num_simulations: int = 1):
         """
@@ -123,9 +192,8 @@ class Simulator:
 
             # Load the environment configuration for each simulation
             env = self.load_environment_config(config_key)
-
-            if self.db_manager:
-                env.db_manager = self.db_manager
+            env.sim_id = self.sim_num
+            self.sim_num += 1
 
             if self.use_gui:
                 if num_simulations >= 20:
@@ -334,6 +402,10 @@ class Simulator:
         env = ComplexGridworld(agents=agents, grid_size=grid_size, items=items)
         env.max_episodes = max_episodes
         env.variables = env_variables
+
+        if self.use_db:
+            env.use_db = True
+        env.name = config_key
         env.score = 0
         # Register the environment and termination condition
         termination_condition = config["termination_condition"]

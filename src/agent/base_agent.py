@@ -10,7 +10,14 @@ from src.agent.backend.local_backend import LocalBackend
 from src.agent.prompts import PromptTemplate
 
 DEFAULT_SYSTEM_PROMPT = """[ Introduction ]
-You are an Agent in a simulated gridworld environment, your mission is to strategically interact with the environment and other agents to achieve your objectives.
+You are an intelligent Agent in a novel simulated gridworld environment. Your goal is to reach a score of 100 by the end of the simulation (you have a limited amount of episodes to complete the objective). 
+This is a novel, unknown environment. You must also explore and reason about the environment around you with your team.
+
+[ Communication Guidelines ]
+- Communicate clearly and constructively with other agents and the system.
+- Share relevant observations or intentions to foster understanding and collaboration.
+- Use concise, respectful language when interacting or negotiating with other agents.
+- Ask questions when clarification is needed to make informed decisions.
 
 [Agent Information]
 **Name**: <<name>>
@@ -19,12 +26,12 @@ You are an Agent in a simulated gridworld environment, your mission is to strate
 
 [ Environment Information ]
 - **General** :
-  - Gridworld size: (computed_size_y, computed_size_x)
-    - The (0, 0) position in the gridworld is at the south-west corner, while the north-east corner is at (computed_size_y,computed_size_x).
+  - Gridworld size: <<grid_size>>
+    - The (0, 0) position in the gridworld is at the south-west corner, while the north-east corner is at <<grid_size>>.
   - Total Agents (including you): <<n_agents>>
   - Names of agents in simulation: <<agent_names>>
 
-***IMPORTANT*** : Positions in the gridworld are in the form (y, x). 
+***IMPORTANT*** : Positions in the gridworld are in the form (x, y). 
 
 [ Action Space ]
 - **Actions** :
@@ -35,21 +42,21 @@ DEFAULT_SYSTEM_PROMPT_OUTPUT_INSTRUCTIONS = """
 You are required to respond in JSON format only.
 
 Your response must include the following keys:
-1. **action_name**: The name of the action you intend to perform.
-2. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
-3. **message**: An optional but crucial message for communicating with other agents. Use this to propose corners, confirm assignments, or resolve conflicts. Every message will be shared with the entire group.
-4. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
-5. **reflection**: Reflect on your current progress towards the goal. Check if the score reflects that the objective is met. If not, analyze why and plan your next steps accordingly.
+1. **reflection**: Reflect on your current progress towards the goal. Check if the score reflects that the objective is met. If not, analyze why and plan your next steps accordingly.
+2. **rationale**: A brief explanation of why this action was chosen, considering the current state and objectives.
+3. **action_name**: The name of the action you intend to perform.
+4. **action_parameters**: Any specific parameters related to the action, such as step count or target position. If there are no parameters, use an empty dictionary.
+5. **message**: An optional but crucial message for communicating with other agents. Use this to propose corners, confirm assignments, or resolve conflicts. Every message will be shared with the entire group.
 6. **add_memory**: (Optional) If you choose to use this, include any important information you want to remember for future turns. This memory will be appended to your existing memory and will be accessible in subsequent turns.
 
 Here is an example of the expected format:
 
 {
+    "reflection": "",
+    "rationale": "",
     "action_name": "",
     "action_parameters": {},
     "message": "",
-    "rationale": "",
-    "reflection": "",
     "add_memory": ""
 }
 
@@ -64,14 +71,14 @@ The score is <<score>> / 100
 
 Memory: <<memory>>
 
-Your current goal is: <<goal>>'
+Your current goal is: <<goal>>
 
 The observation from your previous action is:
 <<observation>>
 
 Your current position:
-  y-position: <<y_position>>
   x-position: <<x_position>>
+  y-position: <<y_position>>
 
 Your current inbox reads:
 <<inbox>>
@@ -137,6 +144,9 @@ class Agent:
         self.user_prompt = None
         self.output_instructions = None
 
+        self.last_user_message = None
+        self.last_assistant_message = None
+
     def create_system_prompt(self, prompt_name: str):
         raise ValueError("Use a Yaml, this method is outdated")
 
@@ -148,12 +158,14 @@ class Agent:
         Adds a user message to the conversation history.
         """
         self.messages.append({"role": "user", "content": message})
+        self.last_user_message = message
 
     def add_agent_message(self, message: str):
         """
         Adds an agent message to the conversation history.
         """
         self.messages.append({"role": "assistant", "content": str(message)})
+        self.last_assistant_message = message
 
     def get_message_history(self) -> List[Dict]:
         """

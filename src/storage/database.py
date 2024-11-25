@@ -27,10 +27,14 @@ class DatabaseManager:
             self.connection,
             'episodes',
             {
-                'episode_id': 'INTEGER',
-                'agent_id': 'INTEGER',
-                'history': 'TEXT NOT NULL',
-                'timestamp': 'DATETIME DEFAULT CURRENT_TIMESTAMP'
+                'environment_name': 'TEXT',  # Clearer name for the simulation ID
+                'simulation_id': 'INTEGER',  # Clearer name for the simulation ID
+                'episode_number': 'INTEGER',  # Indicates the specific episode number
+                'agent_id': 'INTEGER',  # ID of the agent involved in the episode
+                'role': 'TEXT NOT NULL',  # Role of the speaker ('user', 'assistant', etc.)
+                'content': 'TEXT NOT NULL',  # Content of the message or action
+                'action': 'TEXT',  # Optional: Specific action taken by the agent
+                'timestamp': 'DATETIME DEFAULT CURRENT_TIMESTAMP'  # Auto-captures the timestamp
             }
         )
 
