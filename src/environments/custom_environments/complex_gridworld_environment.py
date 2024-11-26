@@ -184,7 +184,7 @@ class ComplexGridworld:
         self.grid[new_x][new_y].agents.append(agent)
 
         if target_square.has_items():
-            current_items_str = ", ".join(str(item) for item in current_square.items)
+            current_items_str = ", ".join(str(item) for item in target_square.items)
             item_observation = f"\nYou are in square ({new_x}, {new_y}). There are items here: {current_items_str}."
         else:
             item_observation = f"\nYou are in square ({new_x}, {new_y}). There are no items here."

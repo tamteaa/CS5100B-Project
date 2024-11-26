@@ -1,5 +1,8 @@
 from src.utils.prepare_jsonl import CreateSyntheticData
 
+
+
+
 if __name__ == '__main__':
     data_gen = CreateSyntheticData("agent_data.db", "episodes")
 

@@ -1,6 +1,6 @@
 import os
 
-from src.utils.fine_tune_job import TogetherFineTune, FineTuneConfig
+from src.utils.fine_tuning import TogetherFineTune, FineTuneConfig
 from dotenv import load_dotenv
 
 # Load the GROQ API KEY from a .env file

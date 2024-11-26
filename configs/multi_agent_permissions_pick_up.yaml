@@ -1,7 +1,7 @@
 random_variables:
   grid_size_x: "random.choice([3, 4, 5])"
   grid_size_y: "random.choice([3, 4, 5])"
-  num_agents: "random.choice([2])"
+  num_agents: "random.choice([2, 3 ])"
 
   # Generate all possible positions
   all_positions: "[(x, y) for y in range(grid_size_y) for x in range(grid_size_x)]"
@@ -23,7 +23,7 @@ env_variables:
   target_positions: target_positions
   use_permissions: True
 
-max_episodes: 25
+max_episodes: 15
 num_agents: num_agents
 grid_size: [grid_size_x, grid_size_y]
 
