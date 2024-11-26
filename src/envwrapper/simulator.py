@@ -51,7 +51,6 @@ def run_simulation(env: ComplexGridworld):
             action_dict = agent.step()
 
             if env.db_manager is not None:
-
                 # Log user observation to the database
                 env.db_manager["episodes"].insert(
                     environment_name=env.name,
@@ -166,13 +165,15 @@ class Simulator:
                 description="Move one step east, which increases your x-coordinate by 1 (0,0) -> (1,0)"
             ),
             "skip": Action(name="skip", description="Do nothing and skip this step."),
-            "pick":  Action(name="pick", description="Pick up the item at current position"),
+            "pick": Action(name="pick", description="Pick up the item at current position"),
             "drop": Action(name="drop", description="Drop off the item at current position"),
         }
 
         self.random_variables = {}
 
         self.sim_num = 0
+
+        self.env_map = {}
 
     def list(self):
         return [key for key, config in self.configs.items()]
@@ -195,6 +196,9 @@ class Simulator:
 
             # Load the environment configuration for each simulation
             env = self.load_environment_config(config_key)
+            if config_key not in self.env_map:
+                self.env_map[config_key] = {}
+            self.env_map[config_key][sim] = env
             env.sim_id = self.sim_num
             self.sim_num += 1
 
@@ -211,6 +215,7 @@ class Simulator:
             scores.append(env.score)
             print("scores so far are", scores)
 
+        print(self.env_map)
         return scores
 
     def generate_random_variables(self, random_definitions):
@@ -363,13 +368,14 @@ class Simulator:
         actions = self.get_actions_from_yaml(environment_config["actions"])
 
         unified_goal = environment_config["unified_goal"]
-        
+
         # Extract items position
         items_config = environment_config.get("env_variables", {}).get("item_positions", None)
         items = None
         if items_config is not None:
-            items = {tuple(pos): [Item(item_type="item", color=(0, 0, 255), shape="triangle")] for pos in eval(items_config)}
-        
+            items = {tuple(pos): [Item(item_type="item", color=(0, 0, 255), shape="triangle")] for pos in
+                     eval(items_config)}
+
         # optional configs
         output_instruction_prompt = environment_config.get("output_instruction_prompt", "NONE")
         system_prompt = environment_config.get("system_prompt", "NONE")
@@ -414,4 +420,3 @@ class Simulator:
         termination_condition = config["termination_condition"]
         env.register_termination_callback(termination_condition)
         return env
-
