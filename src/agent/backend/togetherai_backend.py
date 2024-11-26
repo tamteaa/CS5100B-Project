@@ -6,9 +6,9 @@ class TogetherBackend(Backend):
         super().__init__(
             name="together",
             api_key_prefix="TOGETHER_API_KEY",
-            rate_limit=100,  # Adjust based on your tier
-            min_delay=0.1,
-            history_length=10
+            rate_limit=100,
+            min_delay=1,
+            history_length=7
         )
         self.model = model_id
         self.temperature = 0.9

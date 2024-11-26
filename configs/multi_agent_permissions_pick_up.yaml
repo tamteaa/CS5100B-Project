@@ -1,6 +1,6 @@
 random_variables:
-  grid_size_x: "random.choice([3, 4, 5])"
-  grid_size_y: "random.choice([3, 4, 5])"
+  grid_size_x: "random.choice([ 3, 4 ])"
+  grid_size_y: "random.choice([ 4, 5])"
   num_agents: "random.choice([2, 3 ])"
 
   # Generate all possible positions
@@ -19,7 +19,7 @@ random_variables:
 
 env_variables:
   agent_positions: agent_positions
-  item_positions: item_positions  # Added this
+  item_positions: item_positions
   target_positions: target_positions
   use_permissions: True
 
