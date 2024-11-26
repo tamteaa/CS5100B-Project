@@ -8,13 +8,13 @@ random_variables:
 env_variables:
   corner_positions:
     - [0, 0]                          # South-West Corner
-    - [0, computed_size_x ]            # South-East Corner
-    - [computed_size_y, 0 ]            # North-West Corner
-    - [computed_size_y, computed_size_x]  # North-East Corner
+    - [computed_size_x, 0 ]            # South-East Corner
+    - [0, computed_size_y ]            # North-West Corner
+    - [computed_size_x, computed_size_y ]  # North-East Corner
 
 max_episodes: 10
 num_agents: 4
-grid_size: [grid_size_y, grid_size_x]  # If no value is specified, default grid size of (5,5) is used.
+grid_size: [grid_size_x, grid_size_y]  # If no value is specified, default grid size of (5,5) is used.
 
 actions: |
   - **north**
@@ -28,9 +28,9 @@ actions: |
 unified_goal: |
   Your goal is for each agent to reach an independent corner of the grid without sharing it with another agent. Your specific target position must be one of the following:
   - South-West Corner: (0, 0)
-  - South-East Corner: (0, computed_size_x)
-  - North-West Corner: (computed_size_y, 0)
-  - North-East Corner: (computed_size_y, computed_size_x)
+  - South-East Corner: (computed_size_x, 0)
+  - North-West Corner: (0, computed_size_y)
+  - North-East Corner: (computed_size_x, computed_size_y)
 
   Initially, communicate with other agents to decide who will occupy which corner. Only start moving once all agents have agreed on unique corners to avoid conflicts.
 
