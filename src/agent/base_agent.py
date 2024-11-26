@@ -222,8 +222,8 @@ class Agent:
         and adds the response to the conversation history.
         """
         self.variables["observation"] = self.observation
-        self.variables["x_position"] = self.position[1]
-        self.variables["y_position"] = self.position[0]
+        self.variables["x_position"] = self.position[0]
+        self.variables["y_position"] = self.position[1]
 
         current_score = self.variables.get("score", "NONE")
         if current_score == "NONE":
