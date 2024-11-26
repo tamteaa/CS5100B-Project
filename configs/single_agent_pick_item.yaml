@@ -6,9 +6,10 @@ random_variables:
   target_x: "random.randint(0, grid_size_x - 1)"
   target_y: "random.randint(0, grid_size_y - 1)"
   item_positions: "random.sample([(x, y) for y in range(grid_size_y) for x in range(grid_size_x)], 1)"
+  target_positions: "random.sample([(x, y) for y in range(grid_size_y) for x in range(grid_size_x)], 1)"
 
 env_variables:
-  target_position: [target_x, target_y]
+  target_positions: target_positions
   item_positions: item_positions
 
 max_episodes: 15
