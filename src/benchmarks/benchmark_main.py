@@ -4,10 +4,16 @@ from typing import Optional, Dict, Any, Callable
 import pandas as pd
 import os
 import yaml
+from numpy.ma.extras import average
+from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from src.agent.backend import Provider, GroqModels
 from src.envwrapper.simulator import Simulator
-from benchmark_termination_functions import *
+from src.environments.DEFAULT_CONFIGS import *
+
+
+def get_default_configs():
+    return DEFAULT_CONFIGS
 
 
 class Benchmark:
@@ -17,7 +23,8 @@ class Benchmark:
     BACKEND_PROVIDER = Provider.GROQ
     BACKEND_MODEL = GroqModels.LLAMA_8B
 
-    def __init__(self, use_db: bool = False, use_gui: bool = False, output_dir: str = "./", num_simulations: int = 5, ):
+    def __init__(self, use_db: bool = False, use_gui: bool = False, output_dir: str = "./", num_simulations: int = 5,
+                 backend_model: Optional[str] = GroqModels.LLAMA_8B, backend_provider: Optional[str] = Provider.GROQ):
         """
         Initializes the Benchmark class and constructs the simulator.
 
@@ -25,14 +32,18 @@ class Benchmark:
         :param use_gui: Whether to use a GUI.
         :param output_dir: Directory to save benchmark results.
         """
-        self.configs = self.init_configs()
+        self.configs = {}
+        self.init_configs()
         self.use_db = use_db
         self.use_gui = use_gui
         self.output_dir = output_dir
         self.num_simulations = num_simulations
         os.makedirs(self.output_dir, exist_ok=True)
-        self.simulator = Simulator(use_db=self.use_db, use_gui=self.use_gui, configs=self.configs)
+        self.simulator = Simulator(use_db=self.use_db, use_gui=self.use_gui, configs=self.configs,
+                                   backend_model=self.BACKEND_MODEL, backend_provider=self.BACKEND_PROVIDER)
         self.termination_functions = {}
+        self.BACKEND_PROVIDER = backend_provider
+        self.BACKEND_MODEL = backend_model
 
     def initialize_stats_dataframe(self, agent_name: str):
         """
@@ -46,9 +57,10 @@ class Benchmark:
             "Steps Taken": [0],
             "Score": [0],
             "Messages Sent": [""],
+            "SimNum": [0]
         })
 
-    def run(self, config_keys: list, save_to_csv: bool = False):
+    def run(self, config_keys: list, save_to_csv: bool = True):
         """
         Runs simulations for specified configurations and collects metrics.
 
@@ -70,7 +82,7 @@ class Benchmark:
 
         return all_results
 
-    def run_all(self, save_to_csv: bool = False):
+    def run_all(self, save_to_csv: bool = True):
         """
         Runs benchmarks for all configurations.
 
@@ -79,7 +91,7 @@ class Benchmark:
         config_keys = list(self.configs.keys())
         return self.run(config_keys, save_to_csv)
 
-    def from_config(self, config_file: str, save_to_csv: bool = False, termination_func=None):
+    def from_config(self, config_file: str, save_to_csv: bool = True, termination_func=None):
         """
         Loads a single configuration from a file and runs the benchmark.
 
@@ -104,43 +116,69 @@ class Benchmark:
         :param config_key: The key of the configuration to run.
         :return: A pandas DataFrame with collected stats.
         """
-        # Run the simulation
         scores = self.simulator.run(config_key, num_simulations=self.num_simulations)
 
-        # Collect environment and agent stats
-        env = self.simulator.load_environment_config(config_key)
-        stats_dataframes = []
+        stats_data = []
 
-        for agent_id, agent in env.agents.items():
-            agent_name = agent.name
-            stats_df = self.initialize_stats_dataframe(agent_name)
+        envs = self.simulator.env_map
+        for env_name, sims in envs.items():
+            for sim_num, env in sims.items():
+                for agent_id, agent in env.agents.items():
+                    steps_taken = agent.variables.get("steps_taken", 0)
+                    messages_sent = [
+                        msg.get("content", "")
+                        for msg in agent.messages
+                        if msg.get("role", "") == "assistant"
+                    ]
 
-            # Fill stats from simulation
-            stats_df["Steps Taken"] = agent.variables.get("steps_taken", 0)
-            stats_df["Score"] = agent.variables.get("score", 0)
-            stats_df["Messages Sent"] = ";".join(msg.get("content") for msg in agent.messages)
+                    # Append stats for the current agent
+                    stats_data.append({
+                        "Agent Name": agent.name,
+                        "Steps Taken": steps_taken,
+                        "Score": scores[sim_num],
+                        "Messages Sent": ";".join(messages_sent),
+                        "SimNum": sim_num,
+                    })
 
-            stats_dataframes.append(stats_df)
+        # Create a DataFrame from the collected stats
+        stats_df = pd.DataFrame(stats_data)
 
-        # Concatenate stats for all agents
-        return pd.concat(stats_dataframes, ignore_index=True)
+        # Calculate average steps and scores per agent
+        avg_metrics = stats_df.groupby("Agent Name").agg(
+            Avg_Steps=("Steps Taken", "mean"),
+            Avg_Score=("Score", "mean"),
+            Messages=("Messages Sent", lambda x: " || ".join(x))  # Combine all messages for each agent
+        ).reset_index()
 
-    def build_simulation_config(self, config: Dict[str, Any], path: str, termination_func: Optional):
+        return avg_metrics
+
+    def build_simulation_config(self, config: Dict[str, Any], path: str, termination_func: Optional = None):
         """
         Builds a simulation config for a given configuration and collects metrics.
         :param config: The configuration to build.
         :param path: The path to the configuration file.
         :param termination_func: Function to terminate simulation after a simulation has finished.
+        :return: A dictionary representing the simulation configuration.
         """
-        rand_num_agents = config.get("random_variables", {}).get("num_agents", None)
+        random_vars = config.get("random_variables", {})
         num_agents = config.get("num_agents")
-        if rand_num_agents is not None and rand_num_agents == num_agents:
-            num_agents = eval(num_agents, {"random": random})
+
+        # Resolve random variables
+        if isinstance(num_agents, str):
+            try:
+                # Safely evaluate the num_agents expression
+                num_agents = eval(random_vars.get("num_agents", "1"), {"random": random})
+            except Exception as e:
+                raise ValueError(f"Error evaluating num_agents: {e}")
+
+        # Set default termination function
         if termination_func is None:
             if num_agents > 1:
                 termination_func = align_alphabetically_task_scoring_function
             else:
                 termination_func = single_agent_navigation_scoring_function
+
+        # Return the simulation configuration
         return {
             "yaml_file": path,
             "termination_condition": termination_func,
@@ -160,7 +198,7 @@ class Benchmark:
         if not os.path.exists(configs_directory):
             raise FileNotFoundError(f"Config directory not found: {configs_directory}")
 
-        default_configs = self.get_default_configs()
+        default_configs = get_default_configs()
 
         for filename in os.listdir(configs_directory):
             if filename.endswith(".yaml") or filename.endswith(".yml"):
@@ -179,46 +217,6 @@ class Benchmark:
                 self.configs[config_key] = self.build_simulation_config(
                     config, config_file
                 )
-
-    def get_default_configs(self):
-        return {
-            "single_agent_navigation": {
-                "yaml_file": "single_agent_navigation",
-                "termination_condition": single_agent_navigation_scoring_function,
-                "backend_provider": self.BACKEND_PROVIDER,
-                "backend_model": self.BACKEND_MODEL,
-            },
-            "multi_agent_navigation": {
-                "yaml_file": "multi_agent_navigation",
-                "termination_condition": multi_agent_navigation_scoring_function,
-                "backend_provider": self.BACKEND_PROVIDER,
-                "backend_model": self.BACKEND_MODEL,
-            },
-            "alphabetical_order": {
-                "yaml_file": "alphabetical_order",
-                "termination_condition": align_alphabetically_task_scoring_function,
-                "backend_provider": self.BACKEND_PROVIDER,
-                "backend_model": self.BACKEND_MODEL,
-            },
-            "random_points_multi_agent_navigation": {
-                "yaml_file": "random_points_multi_agent_navigation",
-                "termination_condition": random_points_multi_agent_navigation_scoring_function,
-                "backend_provider": self.BACKEND_PROVIDER,
-                "backend_model": self.BACKEND_MODEL,
-            },
-            "single_agent_pick_item": {
-                "yaml_file": "single_agent_pick_item",
-                "termination_condition": single_agent_pick_item_scoring_function,
-                "backend_provider": self.BACKEND_PROVIDER,
-                "backend_model": self.BACKEND_MODEL,
-            },
-            "multi_agent_pick_item": {
-                "yaml_file": "multi_agent_pick_item",
-                "termination_condition": multi_agent_pick_item_scoring_function,
-                "backend_provider": self.BACKEND_PROVIDER,
-                "backend_model": self.BACKEND_MODEL,
-            },
-        }
 
     def set_termination_condition(self, config_key: str, termination_condition: Callable):
         if config_key in self.configs:
