@@ -38,12 +38,12 @@ class Benchmark:
         self.use_gui = use_gui
         self.output_dir = output_dir
         self.num_simulations = num_simulations
+        self.BACKEND_PROVIDER = backend_provider
+        self.BACKEND_MODEL = backend_model
         os.makedirs(self.output_dir, exist_ok=True)
         self.simulator = Simulator(use_db=self.use_db, use_gui=self.use_gui, configs=self.configs,
                                    backend_model=self.BACKEND_MODEL, backend_provider=self.BACKEND_PROVIDER)
         self.termination_functions = {}
-        self.BACKEND_PROVIDER = backend_provider
-        self.BACKEND_MODEL = backend_model
 
     def initialize_stats_dataframe(self, agent_name: str):
         """
