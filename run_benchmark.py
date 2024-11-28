@@ -50,7 +50,7 @@ def main():
     parser.add_argument(
         "--num_simulations",
         type=int,
-        default=1,
+        default=5,
         help="Number of simulations to run per configuration.",
     )
     parser.add_argument(
@@ -116,7 +116,7 @@ def model(model_inp: str) -> Union[GroqModels, TogetherModels, LocalModels]:
     """Convert a string to the corresponding model enum."""
     for provider in [GroqModels, TogetherModels, LocalModels]:
         for m in provider:
-            if m.name.lower() == model_inp.lower():
+            if str(m).lower() == model_inp.lower():
                 return m
     raise argparse.ArgumentTypeError(f"Invalid model: {model_inp}")
 

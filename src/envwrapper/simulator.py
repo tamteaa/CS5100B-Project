@@ -218,7 +218,6 @@ class Simulator:
             scores.append(env.score)
             print("scores so far are", scores)
 
-        print(self.env_map)
         return scores
 
     def generate_random_variables(self, random_definitions):
