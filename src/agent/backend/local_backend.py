@@ -1,4 +1,3 @@
-from openai import OpenAI
 from src.agent.backend.base_backend import Backend
 from enum import Enum
 
@@ -27,6 +26,7 @@ class LocalBackend(Backend):
         self.client = None
 
     def generate(self, messages):
+        from openai import OpenAI
         try:
             self.client = OpenAI(
                 base_url=self.base_url,

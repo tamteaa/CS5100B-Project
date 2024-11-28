@@ -11,3 +11,7 @@
 finetune_logs
 
 *.jsonl
+
+
+# Allow .db files in the raw_data/ directory
+!raw_data/*.db

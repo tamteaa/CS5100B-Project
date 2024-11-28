@@ -164,8 +164,8 @@ class EnvManager:
 
                 if self.db_manager is not None:
                     self.db_manager['episodes'].insert(
-                        episode_id =episode,
-                        agent_id=agent.id,
+                        episode_id = episode,
+                        agent_id= agent.id,
                         history=[{"action": action, "result": observation_str}]
                     )
 

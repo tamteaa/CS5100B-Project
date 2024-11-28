@@ -11,10 +11,9 @@ class GroqModels(Enum):
 
 class TogetherModels(Enum):
     MIXTRAL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    LLAMA_70B = "togethercomputer/llama-2-70b-chat"
     LLAMA_405B = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
     LLAMA31_8B = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
-    LLAMA31_70B = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+    LLAMA3_70B = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
 
 
 class LocalModels(Enum):
