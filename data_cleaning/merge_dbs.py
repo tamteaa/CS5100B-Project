@@ -1,10 +1,10 @@
-import sqlite3
 import os
-
+import sqlite3
 
 def merge_databases(input_dir, output_db):
     """
     Merges all SQLite .db files in a specified directory into a single database and counts the rows in each file.
+    Supports databases with or without a 'score' column.
 
     Args:
         input_dir (str): Path to the directory containing input .db files.
@@ -71,12 +71,17 @@ def merge_databases(input_dir, output_db):
             columns = input_cursor.fetchall()
             column_names = [col[1] for col in columns]  # Extract column names
 
-            # Create the table in the output database if it doesn't exist
+            # Ensure the 'score' column exists in the schema
+            if 'score' not in column_names:
+                print(f"Adding missing 'score' column to table '{table_name}' in '{db_file}'...")
+                input_cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN score DOUBLE DEFAULT NULL")
+                column_names.append('score')  # Add to column list
+
+            # Ensure the output table schema matches the input table schema
             output_cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'")
             if not output_cursor.fetchone():
-                # Get the CREATE TABLE statement from the input database
-                input_cursor.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}'")
-                create_table_sql = input_cursor.fetchone()[0]
+                print(f"Creating table '{table_name}' in output database...")
+                create_table_sql = f"CREATE TABLE {table_name} ({', '.join(f'{col[1]} {col[2]}' for col in columns)});"
                 output_cursor.execute(create_table_sql)
                 output_conn.commit()
 
@@ -96,36 +101,3 @@ def merge_databases(input_dir, output_db):
 
     output_conn.close()
     print(f"Merged databases into '{output_db}' successfully.")
-
-    # Ask the user if they want to print environment statistics
-    print_stats = input(f"Do you want to print environment statistics for '{output_db}'? (yes/no): ").strip().lower()
-    if print_stats in ['yes', 'y']:
-        print_environment_statistics(output_db)
-
-
-def print_environment_statistics(db_path):
-    """
-    Prints the number of rows for each environment in the merged database.
-
-    Args:
-        db_path (str): Path to the SQLite database.
-    """
-    try:
-        with sqlite3.connect(db_path) as conn:
-            cursor = conn.cursor()
-            # Check if the 'episodes' table exists
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='episodes';")
-            if not cursor.fetchone():
-                print("The 'episodes' table does not exist in the database.")
-                return
-
-            # Query for environment statistics
-            cursor.execute("SELECT environment_name, COUNT(*) FROM episodes GROUP BY environment_name;")
-            stats = cursor.fetchall()
-
-            print("\nEnvironment Statistics:")
-            for environment, count in stats:
-                print(f"Environment '{environment}': {count} rows")
-    except Exception as e:
-        print(f"An error occurred while printing statistics: {e}")
-

@@ -60,6 +60,7 @@ def run_simulation(env: ComplexGridworld):
                     role="user",
                     content=agent.last_user_message,
                     action=None,
+                    score=env.score,
                 )
 
                 env.db_manager["episodes"].insert(
@@ -70,6 +71,7 @@ def run_simulation(env: ComplexGridworld):
                     role="assistant",
                     content=agent.last_assistant_message,
                     action=None,  #
+                    score=env.score,
                 )
 
             # Check if there is a message to send and distribute it to other agents
@@ -198,6 +200,7 @@ class Simulator:
             env = self.load_environment_config(config_key)
             if config_key not in self.env_map:
                 self.env_map[config_key] = {}
+
             self.env_map[config_key][sim] = env
             env.sim_id = self.sim_num
             self.sim_num += 1

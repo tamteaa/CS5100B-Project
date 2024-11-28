@@ -4,21 +4,10 @@ from data_cleaning.merge_dbs import merge_databases
 
 
 def merge_dbs():
-    if __name__ == '__main__':
-        db_files = [
-            "/raw_data/aaron_unfiltered.db",
-            "/raw_data/random_points_multi_agent_navigation.db",
-            "/raw_data/Sebastian_MultiAgent_agent_data.db",
-            "/raw_data/sudhanva_alphabetical_model_70_batch_1.db",
-            "/raw_data/sudhanva_alphabetical_model_70_batch_2.db",
-            "/raw_data/sudhanva_alphabetical_model_90_batch_1.db",
-            "/raw_data/sudhanva_alphabetical_model_90_batch_2.db"
-        ]
-
-        merge_databases(
-            input_dir="raw_data",
-            output_db="merged.db"
-        )
+    merge_databases(
+        input_dir="raw_data",
+        output_db="merged.db"
+    )
 
 
 def process_data():
@@ -44,5 +33,4 @@ def process_data():
 
 if __name__ == '__main__':
     merge_dbs()
-
     process_data()

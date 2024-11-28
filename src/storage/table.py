@@ -39,6 +39,7 @@ class Table:
         insert_query = f"INSERT INTO {self.name} ({columns}) VALUES ({placeholders})"
         self.cursor.execute(insert_query, tuple(serialized_values.values()))
         self.connection.commit()
+
     def fetch_all(self) -> List[tuple]:
         """
         Fetches all rows from the table.
@@ -47,6 +48,7 @@ class Table:
         select_query = f"SELECT * FROM {self.name}"
         self.cursor.execute(select_query)
         return self.cursor.fetchall()
+
     def fetch_by_column(self, column_name: str, value: Any) -> List[tuple]:
         """
         Fetches rows where a specific column matches a given value.

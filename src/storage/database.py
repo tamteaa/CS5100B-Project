@@ -34,7 +34,8 @@ class DatabaseManager:
                 'role': 'TEXT NOT NULL',  # Role of the speaker ('user', 'assistant', etc.)
                 'content': 'TEXT NOT NULL',  # Content of the message or action
                 'action': 'TEXT',  # Optional: Specific action taken by the agent
-                'timestamp': 'DATETIME DEFAULT CURRENT_TIMESTAMP'  # Auto-captures the timestamp
+                'timestamp': 'DATETIME DEFAULT CURRENT_TIMESTAMP',  # Auto-captures the timestamp
+                'score': 'DOUBLE'  # score
             }
         )
 
