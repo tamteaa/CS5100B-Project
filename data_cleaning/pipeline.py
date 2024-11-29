@@ -52,20 +52,15 @@ def pipeline(input_db):
         cleaned_df = extract_successful_simulations_from_df(df)
         print(f"Extraction complete. Cleaned data contains {len(cleaned_df)} rows.")
         cleaned_df = filter_invalid_simulation_ids(cleaned_df)
-        formatted_df = format_messages_for_fine_tuning(cleaned_df)
 
-        # Debug: Print a preview of assistant messages
-        assistant_messages = formatted_df[formatted_df['role'] == 'assistant']
-        print("\nAssistant Messages Preview (Full Text):")
-        for message in assistant_messages["content"].head(2):
-            print(f"- {message}")
+        #formatted_df = format_messages_for_fine_tuning(cleaned_df)
 
         # Ask the user if they want to print environment statistics
         print_stats = input(f"Do you want to print environment statistics for '{input_db}'? (yes/no): ").strip().lower()
         if print_stats in ['yes', 'y']:
-            print_environment_statistics_from_df(formatted_df)
+            print_environment_statistics_from_df(cleaned_df)
 
-        return formatted_df
+        return cleaned_df
 
     except Exception as e:
         print(f"An error occurred during the pipeline: {e}")

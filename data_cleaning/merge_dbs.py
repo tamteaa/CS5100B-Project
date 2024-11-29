@@ -1,6 +1,7 @@
 import os
 import sqlite3
 
+
 def merge_databases(input_dir, output_db):
     """
     Merges all SQLite .db files in a specified directory into a single database and counts the rows in each file.

@@ -97,7 +97,7 @@ class InfoPanelView:
             theme = self.get_message_theme(role)
             text_length = len(content)
             estimated_lines = (text_length // 45) + 1
-            base_height = max(85, 60 + (estimated_lines * 20))
+            base_height = max(85, 300 + (estimated_lines * 20))
             dynamic_height = int(base_height * 1.1)
 
             with dpg.child_window(width=450, height=dynamic_height, autosize_x=True, autosize_y=False):
@@ -150,7 +150,7 @@ class InfoPanelView:
 
                     # Scrollable messages window
                     viewport_height = dpg.get_viewport_height()
-                    remaining_height = viewport_height - 150  # Subtract space used by other elements
+                    remaining_height = viewport_height + 100
                     with dpg.child_window(tag=self.messages_window_tag, height=remaining_height):
                         dpg.add_group(tag=self.messages_container_tag)
 

@@ -14,6 +14,7 @@ class TogetherModels(Enum):
     LLAMA_405B = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
     LLAMA31_8B = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
     LLAMA3_70B = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+    LLAMA31_8B_FINE_TUNED = "aarontamte/Meta-Llama-3.1-8B-Instruct-Reference-stabilized-finetune-v2-a2879a73-d860eb59"
 
 
 class LocalModels(Enum):

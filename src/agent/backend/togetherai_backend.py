@@ -6,7 +6,7 @@ class TogetherBackend(Backend):
         super().__init__(
             name="together",
             api_key_prefix="TOGETHER_API_KEY",
-            rate_limit=100,
+            rate_limit=1000,
             min_delay=1,
             history_length=7
         )

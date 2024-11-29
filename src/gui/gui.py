@@ -16,7 +16,7 @@ class GUI:
         self.view = GridWorldView()
         self.info_panel = InfoPanelView(env)
         self.initial_width = 800
-        self.initial_height = 800
+        self.initial_height = 1100
         self.is_mac = platform.system() == "Darwin"
         self.simulation_thread = None
 

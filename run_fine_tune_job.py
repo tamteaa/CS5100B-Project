@@ -7,31 +7,31 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 
 
-# 3 million training tokens
-# 2 million validation tokens
+# Training tokens: 5,344,937
+# Validation tokens: 1,625,921
 
 if __name__ == '__main__':
     key = os.environ["TOGETHER_API_KEY1"]
 
     config = FineTuneConfig(
-        n_epochs=8,  # Increased epochs for convergence
-        n_checkpoints=3,  # Retain frequent checkpoints
-        batch_size=32,  # Keep larger batch size for stability
-        learning_rate=3e-6,  # Further reduce learning rate for finer updates
-        min_lr_ratio=0.1,  # Gradual reduction of learning rate remains
-        warmup_ratio=0.3,  # Smoother warmup for early training stability
-        max_grad_norm=0.3,  # Retain reduced gradient clipping
-        weight_decay=0.05,  # Slightly increased regularization
-        n_evals=3,  # Retain frequent evaluations
-        lora=True,  # Continue using LoRA
-        lora_r=16,  # Maintain expressive rank for LoRA
-        lora_dropout=0.1,  # Retain dropout for regularization
-        lora_alpha=16,  # Keep scaling factor unchanged
-        lora_trainable_modules="all-linear",  # Focus on linear layers
-        suffix="refined-finetune",  # Updated suffix
-        verbose=True,  # Detailed logging
-        train_on_inputs="auto",  # Retain auto-detection
-        wandb_api_key=os.environ.get("WANDB_API_KEY", None)  # Monitoring
+        n_epochs=6,  # Reduced from 8 since we see overfitting
+        n_checkpoints=6,
+        batch_size=32,  # Increased from 16 to reduce gradient variance
+        learning_rate=5e-5,  # Slightly increased from 1e-4 for better convergence
+        min_lr_ratio=0.05,  # Increased to prevent learning rate from going too low
+        warmup_ratio=0.15,  # Reduced from 0.3 as current warmup seems too long
+        max_grad_norm=0.3,  # Reduced from 0.4 to address gradient spikes
+        weight_decay=0.03,  # Increased from 0.01 to combat overfitting
+        n_evals=8,
+        lora=True,
+        lora_r=8,  # Increased from 4 to allow more expressivity
+        lora_dropout=0.2,  # Reduced from 0.3 as we're adding other regularization
+        lora_alpha=16,  # Reduced from 32 to prevent too aggressive updates
+        lora_trainable_modules="all-linear",
+        suffix="stabilized-finetune-v2",
+        verbose=True,
+        train_on_inputs="auto",
+        wandb_api_key=os.environ.get("WANDB_API_KEY", None)
     )
 
     api = TogetherFineTune(

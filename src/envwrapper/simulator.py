@@ -18,7 +18,7 @@ def run_simulation(env: ComplexGridworld):
         env.db_manager = DatabaseManager(reset_db=False)
 
     env.sim_id = str(uuid.uuid4())
-
+    time.sleep(10)
     # Initial observation of the agent's position
     for agent_id, agent in env.agents.items():
         agent.variables["current_episode"] = 0
@@ -43,8 +43,8 @@ def run_simulation(env: ComplexGridworld):
     env.score = 0
 
     for episode in range(env.max_episodes):
+        print(episode)
         for agent_id, agent in env.agents.items():
-            time.sleep(1.5)
             agent.variables["current_episode"] = episode
 
             # Agent makes a decision based on the current observation
@@ -182,7 +182,10 @@ class Simulator:
 
     def run_multiple(self, config_keys: List, num_simulations: int = 1):
         for config in config_keys:
-            self.run(config, num_simulations)
+            try:
+                self.run(config, num_simulations)
+            except Exception as e:
+                print(e)
 
     def run(self, config_key: str, num_simulations: int = 1):
         """
@@ -194,7 +197,7 @@ class Simulator:
         scores = []  # List to store scores from each simulation
 
         for sim in range(num_simulations):
-            print(f"Running simulation {sim + 1}/{num_simulations}...")
+            print(f"Running simulation {config_key}: {sim + 1}/{num_simulations}...")
 
             # Load the environment configuration for each simulation
             env = self.load_environment_config(config_key)
@@ -216,7 +219,7 @@ class Simulator:
 
             # Collect the score after each run
             scores.append(env.score)
-            print("scores so far are", scores)
+            print("scores so far are for: ", scores)
 
         return scores
 
