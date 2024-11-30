@@ -1,0 +1,26 @@
+# LLM Fine-tuning Notes
+
+## Model
+- Base Model: Meta-Llama-3.1-8B-Instruct
+- Fine-tuning Method: LoRA
+- Loss Function: Cross-entropy (negative log likelihood)
+
+## Training Configuration
+- Epochs: 6
+- Batch Size: 32
+- Learning Rate: 5e-5 with 0.05 min LR ratio
+- Warmup Ratio: 0.15
+- Weight Decay: 0.03
+- Max Gradient Norm: 0.3
+
+## LoRA Parameters
+- Rank (r): 8
+- Alpha: 16
+- Dropout: 0.2
+- Trainable: all-linear modules
+
+## Training Characteristics
+- Initial Loss: ~0.46
+- Final Loss: ~0.35
+- Checkpoints: 6
+- Evaluations: 8
