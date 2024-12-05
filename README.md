@@ -3,6 +3,10 @@ multi-agent systems(MAS), where collaboration among agents is critical—remains
 
 Usage
 
+```
+git clone https://github.com/tamteaa/CS5100B-Project 
+```
+
 Install requirements
 ```
 pip install -r requirements.txt
